@@ -2,7 +2,7 @@
 
 Tk_Multi is a set of Tk composite widget to allow you to manage
 several scrolled Text or Canvas (or your own Multi widget) widgets in
-your Toplevel window.
+your Toplevel window. 
 
 The manager allows you to hide or show any managed text window through
 a menu.
@@ -10,12 +10,16 @@ a menu.
 Tk::Multi::* widgets uses Adjuster to increase, decrease the window
 size, and a menu to print its content.
 
-The Multi::Any class is deprecated. It will was removed in this
-release.  I hope that not too many people were using it (I doubt it
-because I had no question about it :-/ )
+Suggested DSLI entry for the Ptk module list:
 
-This module was written with perl5.005 and now works fine with
-Tk800.010.
+Multi::
+  Manager     bdpO  Manages the Multi widget in a Multi frame  DDUMONT 
+  Toplevel    bdpO  Multi manager in a Toplevel widget         DDUMONT 
+  Canvas      bdpO  A Canvas in the Multi frame                DDUMONT 
+  Text        bdpO  A  text wirdget in the Multi frame         DDUMONT 
+
+This module was written with perl5.00502 and now works fine with
+Tk800.012.
 
 See the embedded documentation in the module for more details.
 
@@ -50,7 +54,7 @@ Albert W. Dorrington's  PrintDialog.
 Legal mumbo jumbo:
 ------------------
 
- Copyright (c) 1997-1998 Dominique Dumont. All rights reserved.
+ Copyright (c) 1997-1999 Dominique Dumont. All rights reserved.
  This program is free software; you can redistribute it and/or
  modify it under the same terms as Perl itself.
 
