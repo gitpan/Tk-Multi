@@ -6,9 +6,9 @@ require Tk::Derived;
 
 use vars qw(@ISA $printCmd $defaultPrintCmd $VERSION);
 
-@ISA = qw(Tk::Derived Tk::Multi::Any);
+@ISA = qw(Tk::Derived Tk::Frame Tk::Multi::Any);
 
-$VERSION = substr q$Revision: 1.8 $, 10;
+$VERSION = substr q$Revision: 1.10 $, 10;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -29,26 +29,51 @@ sub Populate
     require Tk::ROText;
 
     $cw->{_printCmdRef} = \$printCmd ;
-    $args->{_resize_amount} = 5 ;
-    $cw->{minWidth} = 40 ;
-    $cw->{minHeight} = 4 ;
-
     my $data = delete $args->{'data'} || delete $args->{'-data'} ;
 
-#    my $slaveWindow = $args->{_slave} = $cw -> 
-#      Scrolled('ROText',
- #              -scrollbars => 'oe',
-    $args->{_slave} = [qw/ROText relief sunken bd 2 setgrid true height 5/];
+    my $title = delete $args->{'title'} || delete $args->{'-title'} || 
+      'anonymous';
+    $cw ->{'title'} = $title ;
 
-    $cw-> SUPER::Populate($args);
+    my $menu = delete $args->{'menu_button'} || delete $args->{'-menu_button'};
+    die "Multi window $title: missing menu_button argument\n" 
+      unless defined $menu ;
 
-    if (defined $data)
-      {
-        $cw-> insertText (@$data) ;
-      }
-    
+    my $titleLabel = $cw->Label(text => $title.' display')-> pack(qw/fill x/) ;
+
+    $menu->command(-label=>'print', command => [$cw, 'print' ]) ;
+    $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
+
+    # print stuff
+    $cw->{_printToFile} = 0;
+    $cw->{_printFile} = '';
+
+    my $slaveWindow = $cw -> Scrolled ('ROText')
+      -> pack(qw/-fill both -expand 1/) ;
+
+
+    my $subref = sub {$menu->Popup(-popover => 'cursor', -popanchor => 'nw')};
+    $slaveWindow->bind ('<Button-3>', $subref);
+    $titleLabel -> bind('<Button-3>', $subref);
+
+    $cw->ConfigSpecs(
+                     'relief' => [$cw],
+                     'borderwidth' => [$cw],
+                     'scrollbars'=> [$slaveWindow, undef, undef,'osoe'],
+                     'width' => [$slaveWindow, undef, undef, 80],
+                     'height' => [$slaveWindow, undef, undef, 5],
+                     'DEFAULT' => [$slaveWindow]
+                    ) ;
+    $cw->Delegates('command' => $menu, 
+                   'clear' => $cw,
+                   DEFAULT => $slaveWindow) ;
+
+    # needed to avoid geometry problems with packAdjuster
+    #$cw->DoWhenIdle(sub{ $cw->packPropagate(0);}) ;
+    $cw->SUPER::Populate($args);
+
+    $cw-> insertText (@$data) if defined $data ;
     $cw->yview('moveto', 1) ; # move diplay to the end
-
   }    
 
 sub insertText
@@ -68,12 +93,6 @@ sub clear
     my $cw= shift ;
     
     $cw->delete('1.0','end') ;
-  }
-
-sub resetPrintCmd
-  {
-    my $cw=shift ;
-    $printCmd=$defaultPrintCmd ;
   }
 
 sub printableDump
@@ -119,18 +138,13 @@ a scrollable read-only text window (based on ROtext)
 
 =item *
 
-2 buttons on the left side of the widget to resize height of the window. 
-(I should use packAdjust but I couldn't get it to work well. I may do it later)
+A print menu button (The shell print command may be modified by
+setting $Tk::Multi::Text::printCmd to the appropriate shell
+command. By default, it is set to 'lp -ol70 -otl66 -o12 -olm10')
 
 =item *
 
-A print button (The shell print command may be modified by setting 
-$Tk::Multi::Text::printCmd to the appropriate shell command. By default, it is
-set to 'lp -ol70 -otl66 -o12 -olm10') 
-
-=item *
-
-a clear button
+a clear menu button.
 
 =back
 
@@ -148,17 +162,13 @@ Some text which will be displayed above the test window.
 
 The log window feature a set of menu items which must be added in a menu.
 This menu ref must be passed with the menu_button prameter 
-to the object during its instaciation
+to the object during its creation.
 
 =head2 data
 
 A string which will be displayed in the text window.
 
 =head1 WIDGET-SPECIFIC METHODS
-
-=head2 setSize( heigth, [ width ])
-
-Will resize the text window. Heigth lower than 5 are ignored.
 
 =head2 insertText($some_text)
 
@@ -169,24 +179,6 @@ Insert the passed string at the bottom of the text window
 Will raise a popup window with an Entry to modify the actual print command,
 a print button, a default button (to restore the default print command),
 and a cancel button.
-
-=head2 doPrint
-
-Print the title and the content of the text window. The print is invoked
-by dumping the text content into a piped command. By default this command 
-is set to 'lp -ol70 -otl66 -o12 -olm10' which works fine on my HP-UX
-machine with A4 paper.
-
-You may want to set up a new command to print correctly on your machine.
-You may do it by using the setPrintCmd method or by invoking the 
-'print' method.
-
-=head2 setPrintCmd('print command')
-
-Will set the $printCmd class variable to the passed string. You may use this
-method to set the appropriate print command on your machine. Note that 
-using this method will affect all other Tk::Multi::Text object since the
-modified variable is not an instance variable but a class variable.
 
 =head2 clear
 
@@ -200,6 +192,10 @@ By default all widget method are delegated to the Text widget. Excepted :
 
 Delegated to the menu entry managed by Multi::Manager. Will add a new command
 to the aforementionned menu.
+
+=head1 TO DO
+
+Defines ressources for the config options.
 
 =head1 AUTHOR
 

@@ -6,4 +6,7 @@ Multi/Manager.pm
 Multi/Text.pm
 Multi/Canvas.pm
 README
-test.pl
+t/without_menu.t
+t/without_mgr.t
+t/with_menu.t
+t/canvas.t

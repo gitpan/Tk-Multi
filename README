@@ -5,13 +5,14 @@ in your Toplevel window.
 
 The manager allows you to hide or show any managed text window through a menu.
 
-Tk::Multi::* widgets also have buttons to increase, decrease the window 
+Tk::Multi::* widgets uses packAdjust to increase, decrease the window 
 size, and a menu to print its content. 
 
-The Multi::Any module can be inherited to define your own widget which will
-be managed by Tk::Multi::Manager.
+The Multi::Any class is deprecated. It will be removed in the next release.
+I hope that not too many people were using it (I doubt it because I had 
+no question about it :-/ )
 
-This module was written with perl5.004 and now works fine with Tk402.003.
+This module was written with perl5.005 and now works fine with Tk800.010.
 
 See the embedded documentation in the module for more details.
 
@@ -19,6 +20,9 @@ Comments and suggestions are always welcome.
 
 Note that this module is in beta state. Its interface may still change 
 (but I don't think so)
+
+I'd like people who actually use this module for their application to
+drop me a short note about what they're using this module for. 
 
 Beta exit criteria:
 - When some peoples (well, say 10 guys) tell me that they've used it 

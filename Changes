@@ -1,3 +1,10 @@
+v0.7: 1998-08-13  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	* Multi::Any is deprecated (was a bad idea :-( )
+	* All : simplified Populate method, expand does work, removed 
+	resize buttons, removed setSize methods, added help support
+	* test: split test.pl in t/*.t files
+
 v0.6: 1998-06-24  Dominique Dumont  <domi@barrayar.grenoble.hp.com> 
 
 	* test.pl: cleanup traces

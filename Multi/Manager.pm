@@ -6,13 +6,14 @@ use vars qw($VERSION @ISA $errno);
 use Carp ;
 use Tk::Derived;
 use Tk::Frame;
+use Tie::IxHash ;
 
 @ISA = qw(Tk::Derived Tk::Frame);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$VERSION = substr q$Revision: 1.9 $, 10;
+$VERSION = substr q$Revision: 1.11 $, 10;
 
 Tk::Widget->Construct('MultiManager');
 
@@ -27,24 +28,45 @@ sub Populate
     my $title =  delete $args->{'title'} || delete $args->{'-title'} || 
       'display';
 
+    $cw->{trace} = delete $args->{'trace'} ;
+
     my $userMenu = delete $args->{menu} || delete $args->{-menu} ;
-    if ($userMenu)
+    unless (defined $userMenu)
       {
-        $cw->{menu}= $userMenu -> Menubutton (-text => $title) 
-          -> pack(side => 'left' );
-      }
-    else
-      {
-        my $w_menu = $cw->Frame(-relief => 'raised', -borderwidth => 2);
-        $w_menu->pack(-fill => 'x');
-        $cw->{menu}= $w_menu -> Menubutton (-text => $title) 
-          -> pack(side => 'left') ;
+        $userMenu = $cw->Frame(-relief => 'raised', -borderwidth => 2);
+        $userMenu->pack(-fill => 'x');
       }
 
-    my $obj = $cw->{windowFrame} = $cw -> Frame -> pack ;
+    $cw->{menu}= $userMenu -> Menubutton (-text => $title) 
+      -> pack(side => 'left' );
 
-    $cw->ConfigSpecs(DEFAULT => [$obj]) ;
-    $cw->Delegates(DEFAULT => $obj) ;
+    # add help menu on the right side
+    $cw->{help}= $userMenu -> Menubutton (-text => 'Help') 
+      -> pack(side => 'right') ;
+ 
+    # add global help if defined 
+    my $help = defined $args->{'help'} ? $args->{help} :
+      "If you read this text and if the help menu has no other entry ".
+        "than 'global', it means that the user of Tk::Multi did not provide ".
+          "any help for the application you're using. Shame on him.";
+    delete $args->{'help'} if exists $args->{'help'}; #cleanup
+
+    $cw->addHelp('global', $help);
+
+    #$cw->{slave} = Tie::IxHash -> new () ;
+    my %sHash ;
+    $cw->{tiedSlave} = tie %sHash,  'Tie::IxHash' ;
+    $cw->{slave} = \%sHash ;
+
+    #my $obj = $cw->{windowFrame} = $cw -> Frame(bg => 'red')
+    #  ->pack(qw(fill both));
+
+    $cw->ConfigSpecs(DEFAULT => [$cw],
+                    'width' => ['SELF'],
+                    'height' => ['SELF'],
+) ;
+    #$cw->Delegates(DEFAULT => 'SELF' ) ;
+    $cw->SUPER::Populate($args) ;
   }
 
 # may add a new Note to the note book
@@ -65,44 +87,61 @@ sub newSlave
     croak("No type specified\n") unless defined $slaveType ;
 
     # add button if it doesn't exist
-    if (defined $cw->{menu}{$title})
+    if (defined $cw->{slave}{$title})
       {
         # display error message
-        die "Window $title already exists\n";
+        $cw->BackTrace("Window $title already exists\n");
       }
- 
-    $cw->{'show'}{$title} = 1 ;
+    else
+      {
+        # create the new entry in the tied hash
+        $cw->{tiedSlave}->Push($title => {}) ; 
+      } 
+
+    $cw->{slave}{$title}{show} = 1 ;
+
     if (defined $args{'hidden'} )
       {
-        $cw->{'show'}{$title} = 0 if $args{'hidden'} == 1 ;
+        $cw->{slave}{$title}{'show'} = 0 if $args{'hidden'} == 1 ;
         delete $args{'hidden'} ;
       }
     
-    if (defined $cw->{slave}{$title})
+    if (defined $cw->{slave}{$title}{widget})
       {
         $cw->updateVisi($title) ;
-        return $cw->{slave}{$title} ;
+        return $cw->{slave}{$title}{widget} ;
       };
+    
+    # add help button if help is defined 
+    $cw->addHelp('on '.$title, delete $args{help}) if defined $args{'help'} ;
+    delete $args{'help'} if exists $args{'help'}; # cleanup
 
-    my $frame = $cw -> {windowFrame} ;
-     
+    # add control button
     my $topmenu = $cw->{menu} ;
     $topmenu -> cascade(-label => $title ) ;
 
     my $cm = $topmenu -> cget(-menu);
     my $menu = $cm->Menu;
     $topmenu->entryconfigure($title, -menu => $menu);
-    $menu->checkbutton(-label => 'show', 
-                       -variable => \$cw->{'show'}{$title},
-                      command => sub {$cw->updateVisi($title) ;});
 
-    $cw->{submenu}{$title} = $menu ;
+    # checkButton does not work if I get the ref from inside the tied hash
+    # hence the use of the intermediate reference
+    my $var = $cw->{slave}{$title}{'show'} ;
+    $cw->{slave}{$title}{'showRef'} = \$var ;
+    $menu->checkbutton
+      (
+       -label => 'show', 
+       -variable => \$var,
+       command => sub {$cw->updateVisi($title) ;}
+      );
+
+    $cw->{slave}{$title}{submenu} = $menu ;
 
     my $destroyable = delete $args{'destroyable'} ;
 
-    $cw->{slave}{$title} = 
-      $frame -> $slaveType ('menu_button' => $menu, 
-                            qw/relief raised borderwidth 2/,
+    $cw->{slave}{$title}{widget} = 
+      $cw -> $slaveType ('menu_button' => $menu, 
+                            qw/relief raised borderwidth 4/,
                             %args);
 
     if (defined $destroyable and $destroyable)
@@ -111,42 +150,121 @@ sub newSlave
                        command => sub{$cw->destroySlave($title);} );
       }
 
-    $cw->{slave}{$title} -> pack() if $cw->{'show'}{$title};
+    # bottom slave must not use the packAdjust method
+    $cw->updateVisi($title);
 
-    return $cw->{slave}{$title} ;
+    return $cw->{slave}{$title}{widget} ;
   }
 
+
+sub addHelp
+  {
+    my $cw = shift ;
+    my $label = shift ;
+    my $help = shift ;
+    
+    my $sub = ref($help) eq 'CODE' ? $help :
+      sub 
+        {
+          require Tk::Dialog ;
+          $cw ->Dialog('title'=> "$label help", text => $help ) -> Show();
+        } ;
+
+    $cw->{'help'} -> command (-label => $label, -command => $sub);
+  }
 
 sub hide 
   {
     my $cw = shift ;
     my $title = shift ;
-    $cw->{'show'}{$title} = 0;
-    $cw-> updateVisi($title) ;
+    $cw-> updateVisi($title,0) ;
   }
 
 sub show 
   {
     my $cw = shift ;
     my $title = shift ;
-    $cw->{'show'}{$title} = 1;
-    $cw-> updateVisi($title) ;
+    $cw-> updateVisi($title,1) ;
   }
 
 sub updateVisi
   {
     my $cw = shift ;
     my $title = shift ;
-    
-    if ($cw->{'show'}{$title})
+    my $show = shift ;
+
+    my $ref = $cw->{slave}{$title}{'showRef'};
+    if (defined $show)
       {
-        #raise it
-        $cw->{slave}{$title} -> pack ;
+        # update value used by the check Button
+        $$ref = $cw->{slave}{$title}{'show'} = $show ;
       }
     else
       {
+        $show = $cw->{slave}{$title}{'show'} = $$ref ;
+      }
+
+
+    my $slave = $cw->{slave}{$title} ;
+    my $idx = $cw->{tiedSlave} -> Indices($title) ;
+    my $nextShowed ;
+    my $prevShowed ;
+    my $l = $cw->{tiedSlave}->Length() ;
+    print "$title index is $idx out of $l\n" if $cw->{trace} ;
+    for (my $i=0; $i<$l; $i++)
+      {
+        my $item = $cw->{tiedSlave}-> Values($i) ;
+        $prevShowed = $i if ($i<$idx && $item->{'show'}) ;
+        if ($i>$idx && $item->{'show'})
+          {
+            $nextShowed = $i ;
+            last ;
+          }
+      }
+ 
+    print "$title show is $show\n" if $cw->{trace} ;
+    print "$title previous showed is index $prevShowed\n" if $cw->{trace} ;
+    print "$title next showed is index $nextShowed\n" if $cw->{trace} ;
+
+    my @pargs = qw/fill both expand 1 anchor n/;
+    if ($show)
+      {
+        if (defined $nextShowed)
+          {
+            print "$title uses packAdjust\n" if $cw->{trace} ;
+            my $w = $cw->{slave}{$title}{widget};
+            $w-> packAdjust(@pargs, before =>
+                            $cw->{tiedSlave}-> Values($nextShowed)->{widget});
+            $w-> after(500,sub{$w->packPropagate(0);}) ;
+          }
+        else
+          {
+            print "$title uses pack\n" if $cw->{trace} ;
+            $cw->{slave}{$title}{widget} -> pack(@pargs) ;
+            if (defined $prevShowed)
+              {
+                print "index $prevShowed uses packAjust\n" if $cw->{trace} ;
+                my $w = $cw->{tiedSlave}-> Values($prevShowed)->{widget} ;
+                $w->packForget();
+                $w-> packAdjust(@pargs, before =>$cw->{slave}{$title}{widget});
+                $w ->after(500,sub{$w->packPropagate(0);});
+              }
+          }
+      }
+    else
+      {
+        if (defined $prevShowed)
+          {
+            print "index $prevShowed uses pack\n" if $cw->{trace} ;
+            my $w = $cw->{tiedSlave}-> Values($prevShowed)->{widget} ;
+            $w->packForget();
+            $w->packPropagate(1);
+            $w->pack(qw/fill both expand 1/) ;
+          }
         #hide it
-        $cw->{slave}{$title} -> packForget ;
+        print "$title uses packForget\n" if $cw->{trace} ;
+        $cw->{slave}{$title}{widget} -> packForget ;
+        $cw->{slave}{$title}{widget} -> packPropagate(1);
       }
   }
 
@@ -156,23 +274,22 @@ sub destroySlave
     my $title = shift ;
 
     die "Slave $title does not exist\n" 
-      unless defined $cw->{slave}{$title} ;
+      unless defined $cw->{slave}{$title}{widget} ;
 
     # retrieve actual menu object from the MenuButtom
     my $cm = $cw->{menu} -> cget(-menu);
 
-    $cw->{slave}{$title}->destroy;
-    $cw->{submenu}{$title}->destroy;
+    $cw->{slave}{$title}{widget}->destroy;
+    $cw->{slave}{$title}{submenu}->destroy;
     
     # delete the actual Menu entry from topmenu
     $cm -> delete($title) ;
 
-    delete $cw->{'show'}{$title} ;
-    delete $cw->{submenu}{$title} ;
-    delete $cw->{slave}{$title} ;
+    delete $cw->{slave}{$title};
   }
 
 1;
+
 __END__
 
 
@@ -188,11 +305,17 @@ Tk::Multi::Manager - Tk composite widget managing Tk::Multi slaves
  my $manager = yourWindow -> MultiManager 
   (
    menu => $menu_ref , # optionnal
-   title => "windows" # optionnal
+   title => "windows", # optionnal
+   help => "Explain what your set of widget do" #optionnal
   ) -> pack ();
 
  # Don't pack it, the managet will do it
- my $w1 = $manager -> newSlave('type' => 'MultiText', 'title' => 'a_label');
+ my $w1 = $manager -> newSlave
+  (
+   'type' => 'MultiText', 
+   'title' => 'a_label',
+   help => "Explain what your slave widget does" #optionnal
+  );
 
 =head1 DESCRIPTION
 
@@ -203,6 +326,14 @@ The user can add windows to the manager. Each window visibility is
 controled by a check button in the menu cascade.
 The check button actually tells the packer to forget the window. note that
 the window object is not destroyed.
+
+The main menu bar will feature a 'Help' menu on the right. If the main help
+which explain the purpose of the Multi::Manager and its slaves is provided 
+when creating the widget,
+the Help sub-menu will feature a 'global' label. 
+
+Each slave widget which is
+created with a help will have its own label in the help menu.
 
 =head1 Constructor configuration options
 
@@ -216,6 +347,18 @@ If not provided, the widget will create a its own menu.
 
 The optionnal title argument contains the title of the menu created by the 
 manager.
+
+=head2 help
+
+The argument may be a string or a sub reference.
+
+When the help menu is invoked, either the help string will be displayed 
+in a Tk::Dialog box or the sub will be run. In this case it is the user's
+responsability to provide a readable help from the sub.
+
+=cut
+
+#'
 
 =head1 Methods
 
@@ -243,6 +386,11 @@ specifies whether the widget is to be packed right now or not
 a 'destroy' button is created if this parameter is defined (default no).
 Returns the slave widget reference.
 
+=item help
+
+This argument may be specified like the help parameter defined above for the
+constructor.
+
 =back
 
 =head2 hide('name of the slave');
@@ -259,9 +407,16 @@ Destroy the slave
 
 =head1 BUGS
 
-When unpacking or destroying the last window, the enclosing frame does not
-reduce its size. It's probably a matter of geometry propagation to the 
-enclosing frame. 
+Using packAdjuster is somewhat shaky when more than 2 slaves are packed.
+
+Hiding an adjusted slave widget will leave an orphan Adjuster bar. 
+
+When packing a slave widget after the window has been displayed, the slave
+is packed *outside* the window so it becomes visible only if the user
+manually increase the size of the top window (by dragging a side or a corner).
+
+I guess that geometry management still has some mysteries that I cannot figure
+out.
 
 =head1 AUTHOR
 
@@ -273,7 +428,7 @@ modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-perl(1), Tk(3), Tk::Multi::Text(3)
+perl(1), Tk(3), Tk::Multi::Text(3), Tk::Multi::Canvas(3)
 
 =cut
 

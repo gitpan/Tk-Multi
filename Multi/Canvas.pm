@@ -9,9 +9,9 @@ use Tk::Multi::Any;
 
 use vars qw(@ISA $printCmd $defaultPrintCmd $VERSION);
 
-@ISA = qw(Tk::Derived Tk::Multi::Any);
+@ISA = qw(Tk::Derived Tk::Frame Tk::Multi::Any);
 
-$VERSION = substr q$Revision: 1.3 $, 10;
+$VERSION = substr q$Revision: 1.4 $, 10;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -31,20 +31,45 @@ sub Populate
     require Tk::Label;
     require Tk::Canvas;
 
-    $cw->{minWidth} = 500 ;
-    $cw->{minHeight} = 200 ;
-    my $width = delete $args->{'width'} || delete $args->{'-width'} || 
-      $cw->{minWidth} ;
-    my $height = delete $args->{'height'} || delete $args->{'-height'} ||
-      $cw->{minHeight} ;
-
-    $args->{_slave} = [qw/Canvas relief sunken bd 2 height/, $height,
-                       width => $width ] ;
     $cw->{_printCmdRef} = \$printCmd ;
 
-    $args->{'_hscroll'}= 1;
-    $args->{'_resize_amount'} = 80 ;
-    $cw-> SUPER::Populate($args);
+    my $title = delete $args->{'title'} || delete $args->{'-title'} || 
+      'anonymous';
+    $cw ->{'title'} = $title ;
+
+    my $menu = delete $args->{'menu_button'} || delete $args->{'-menu_button'};
+    die "Multi window $title: missing menu_button argument\n" 
+      unless defined $menu ;
+
+    my $titleLabel = $cw->Label(text => $title.' display')-> pack(qw/fill x/) ;
+
+    $menu->command(-label=>'print', command => [$cw, 'print' ]) ;
+    $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
+
+    # print stuff
+    $cw->{_printToFile} = 0;
+    $cw->{_printFile} = '';
+
+    my $slaveWindow = $cw -> Scrolled (qw/Canvas relief sunken bd 2/)
+      -> pack(qw/-fill both -expand 1/) ;
+
+    my $subref = sub {$menu->Popup(-popover => 'cursor', -popanchor => 'nw')};
+    #$slaveWindow->Subwidget('scrolled') -> bind ('<Button-3>', $subref);
+    $titleLabel -> bind('<Button-3>', $subref);
+
+    $cw->ConfigSpecs(
+                     'relief' => [$cw, undef, undef, 'raised'],
+                     'borderwidth' => [$cw, undef, undef, 2 ],
+                     'scrollbars'=> [$slaveWindow, undef, undef,'osoe'],
+                     'width' => [$slaveWindow, undef, undef, 400],
+                     'height' => [$slaveWindow, undef, undef, 200],
+                     'DEFAULT' => [$slaveWindow]
+                    ) ;
+    $cw->Delegates('command' => $menu, 
+                   'clear' => $cw,
+                   DEFAULT => $slaveWindow) ;
+
+    $cw->SUPER::Populate($args);
   }    
 
 sub clear 
@@ -107,11 +132,6 @@ a scrollable Canvas
 
 =item *
 
-4 buttons on the left to resize the window. 
-(I should use packAdjust but I couldn't get it to work well. I may do it later)
-
-=item *
-
 A print button (The shell print command may be modified by setting 
 $Tk::Multi::Canvas::printCmd to the appropriate shell command. By default, 
 it is set to 'lp -opostscript') 
@@ -168,7 +188,7 @@ modified variable is not an instance variable but a class variable.
 
 =head2 clear
 
-Is just a delete('1.0','end') .
+clear all items in the canvas.
 
 =head1 Delegated methods
 
@@ -186,6 +206,8 @@ print management composite widget which will look like Netscape's print
 window. But that's quite low on my priority list. Any volunteer ?
 
 Dragging middle mouse button to scroll the canvas.
+
+Defines ressources for the config options.
 
 =head1 AUTHOR
 
