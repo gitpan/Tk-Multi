@@ -1,7 +1,9 @@
 Changes
+Makefile.PL
+MANIFEST
+Multi/Any.pm
 Multi/Manager.pm
 Multi/Text.pm
-MANIFEST
+Multi/Canvas.pm
 README
-Makefile.PL
 test.pl

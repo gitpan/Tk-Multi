@@ -23,3 +23,8 @@ Revision history for Perl extension Tk::Log.
         - Autoload was not a good idea. Removed
         - removed print left from debug days
         - better start-up time
+
+0.4 
+        - Added MultiCanvas.
+        - Added Any to create new Multi slaves
+        - Popup menus

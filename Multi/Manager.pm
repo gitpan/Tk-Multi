@@ -12,10 +12,11 @@ use Tk::Frame;
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-( $VERSION ) = '$Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = substr q$Revision: 1.9 $, 10;
 
 Tk::Widget->Construct('MultiManager');
 
+my $title_num = 0;
 
 sub Populate
   {
@@ -23,14 +24,14 @@ sub Populate
     
     require Tk::Menubutton;
 
-    my $title = 'display';
-    $title = delete $args->{title} if defined $args->{title} ;
-    
-    if (defined $args->{menu})
+    my $title =  delete $args->{'title'} || delete $args->{'-title'} || 
+      'display';
+
+    my $userMenu = delete $args->{menu} || delete $args->{-menu} ;
+    if ($userMenu)
       {
-        $cw->{menu}= $args->{menu} -> Menubutton (-text => $title) 
+        $cw->{menu}= $userMenu -> Menubutton (-text => $title) 
           -> pack(side => 'left' );
-        delete $args->{menu} ;
       }
     else
       {
@@ -55,8 +56,10 @@ sub newSlave
     my $cw = shift ;
     my %args = @_ ;
 
-    my $title = $args{'title'} ;
-    croak("No title specified\n") unless defined $title ;
+
+    $args{'title'} = $args{'-title'} || $cw->Class . "-" . $title_num++
+      unless defined $args{'title'} ;
+    my $title =  $args{'title'} ;
 
     my $slaveType = delete $args{'type'};
     croak("No type specified\n") unless defined $slaveType ;
@@ -98,7 +101,9 @@ sub newSlave
     my $destroyable = delete $args{'destroyable'} ;
 
     $cw->{slave}{$title} = 
-      $frame -> $slaveType ('menu_button' => $menu, %args);
+      $frame -> $slaveType ('menu_button' => $menu, 
+                            qw/relief raised borderwidth 2/,
+                            %args);
 
     if (defined $destroyable and $destroyable)
       {
@@ -106,7 +111,7 @@ sub newSlave
                        command => sub{$cw->destroySlave($title);} );
       }
 
-    $cw->{slave}{$title} -> pack if $cw->{'show'}{$title};
+    $cw->{slave}{$title} -> pack() if $cw->{'show'}{$title};
 
     return $cw->{slave}{$title} ;
   }
@@ -230,7 +235,7 @@ specifies the title of the widget (mandatory).
 
 =item hidden
 
-specifies whether the widget is to be packed tight now or not 
+specifies whether the widget is to be packed right now or not 
 (default 0)
 
 =item destroyable
@@ -261,6 +266,10 @@ enclosing frame.
 =head1 AUTHOR
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
+
+Copyright (c) 1997-1998 Dominique Dumont. All rights reserved.
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
