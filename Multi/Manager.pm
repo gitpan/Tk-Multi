@@ -35,6 +35,7 @@ sub Populate
       {
         $cw->{dodu}{menu}= $args->{menu} -> Menubutton (-text => $title) 
           -> pack(side => 'left' );
+        delete $args->{menu} ;
       }
     else
       {
@@ -99,10 +100,12 @@ sub newSlave
 
     $cw->{dodu}{submenu}{$title} = $menu ;
 
+    my $destroyable = delete $args{'destroyable'} ;
+
     $cw->{dodu}{slave}{$title} = 
       $frame -> $slaveType ('menu_button' => $menu, %args);
 
-    if ($args{'destroyable'})
+    if (defined $destroyable and $destroyable)
       {
         $menu->command(-label=>'destroy', 
                        command => sub{$cw->destroySlave($title);} );
