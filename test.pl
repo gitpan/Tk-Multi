@@ -6,16 +6,18 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..1\n"; }
+BEGIN { $| = 1; print "1..8\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Tk ;
 use ExtUtils::testlib;
+use Tk::Pane ;
 use Tk::Multi::Manager;
 use Tk::Multi::Text;
 use Tk::Multi::Canvas; 
 require Tk::ErrorDialog; 
 $loaded = 1;
-print "ok 1\n";
+my $idx = 1;
+print "ok ",$idx++,"\n";
 
 ######################### End of black magic.
 
@@ -25,6 +27,9 @@ print "ok 1\n";
 
 use strict ;
 my $toto ;
+
+my $trace = shift || 0 ;
+
 my $omw = MainWindow-> new ;
 
 my $mw = $omw -> 
@@ -39,24 +44,29 @@ $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
   -> pack(side => 'left' );
-$f->command(-label => 'Quit',  -command => sub{exit;} );
+$f->command(-label => 'Quit',  -command => sub{$omw->destroy;} );
 
 $mw -> Button (text => 'add', command => sub {$toto -> insertText("added\n")} ) 
   -> pack(qw/fill x/) ;
 
-print "creating manager\n";
+print "creating manager\n" if $trace ;
 my $wmgr = $mw -> MultiManager ( 'title' => 'log test' ,
                              'menu' => $w_menu ) -> pack (qw/fill x fill y/);
 
-print "Creating sub window toto\n";
+print "ok ",$idx++,"\n";
+
+print "Creating sub window toto\n" if $trace ;
 $toto = $wmgr -> newSlave('type'=>'MultiText') ;
-print "Creating sub window list\n";
+
+print "Creating sub window list\n" if $trace ;
 my $list = $wmgr -> newSlave('type'=> 'MultiText', title => 'list',
                             height => '10', data => [1 .. 20] ) ;
 $list->command(-label => 'display dummy',  
                -command => sub{$list->insertText("added dummy\n");} );
 
-print "Creating sub window debug\n";
+print "ok ",$idx++,"\n";
+
+print "Creating sub window debug\n" if $trace ;
 my $debug = $wmgr -> newSlave
   (
    'type'=>'MultiText', 
@@ -66,7 +76,7 @@ my $debug = $wmgr -> newSlave
    'destroyable' => 1
   ) ;
 
-print "Creating canvas sub window \n";
+print "Creating canvas sub window \n" if $trace ;
 my $canvas = $wmgr -> newSlave
   (
    'type'=>'MultiCanvas',
@@ -79,17 +89,23 @@ $mw -> Button (text => 'destroy list slave', command =>
                sub {$wmgr -> destroySlave('list')} ) 
   -> pack ;
 
-print "print Line try\n" ;
+print "ok ",$idx++,"\n";
+
+print "print Line try\n"  if $trace ;
 $list -> insertText("Salut les copains\n");
 
-print "insert try\n";
+print "insert try\n" if $trace ;
 $toto -> insert ('end',"toto is not titi\n");
 
-print "creating 2nd manager without menu\n";
+print "creating 2nd manager without menu\n" if $trace ;
 
+print "ok ",$idx++,"\n";
 my $wmgr2 = $mw -> MultiManager ( 'title' => 'log test' ) -> pack (qw/fill x/);
+print "ok ",$idx++,"\n";
 my $list2 = $wmgr2 -> newSlave('type'=>'MultiText',) ;
 my $list3 = $wmgr2 -> newSlave('type'=>'MultiText', title =>'another list') ;
 
+print "ok ",$idx++,"\n";
 MainLoop ; # Tk's
 
+print "ok ",$idx++,"\n";

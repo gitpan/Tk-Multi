@@ -3,10 +3,11 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
               'NAME'	   => 'Tk::Multi',
-              'VERSION' => '0.4',
+              'VERSION' => '0.6',
               'dist' => {COMPRESS=>'gzip -9f', SUFFIX => 'gz'},
               'PREREQ_PM' =>
               {
-               'Tk' => 0
+               'Tk' => 0,
+               'Tk::Pane' => 0
               }
-);
+             );

@@ -6,9 +6,14 @@ require Tk::Frame;
 
 use vars qw(@ISA $VERSION $incHeightBm $decHeightBm $incWidthBm $decWidthBm);
 
+$incHeightBm = 'incH' ;
+$decHeightBm = 'decH';
+$incWidthBm = 'incW' ;
+$decWidthBm = 'decW';
+
 @ISA = qw(Tk::Derived Tk::Frame);
 
-$VERSION = substr q$Revision: 1.4 $, 10;
+$VERSION = substr q$Revision: 1.5 $, 10;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -49,8 +54,12 @@ sub Populate
     $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
     
     # use Images (see p32) (BITMAP -> used as image option in button )
-    $cw ->_defineHBM () unless (defined $incHeightBm) ;
-    $cw->_defineWBM() if (not defined $decWidthBm and defined $hScroll) ;
+    $cw ->_defineHBM () 
+      if (scalar grep($_ eq $incHeightBm, $cw->imageNames) == 0) ;
+    $cw->_defineWBM() 
+      if (defined $hScroll and
+          (scalar grep($_ eq $decWidthBm, $cw->imageNames) == 0) 
+         ) ;
 
     my $b_f = $slaveFrame -> Frame -> pack (-fill => 'y',side => 'left') ;
     $b_f -> Button (-image => $incHeightBm,
@@ -119,7 +128,6 @@ sub _defineHBM
   {
     my $cw = shift ;
 
-    $incHeightBm = 'incH' ;
     $cw->Bitmap 
       ($incHeightBm, 
        -data =>'
@@ -130,7 +138,6 @@ static char incHeight_bits[] = {
    0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00,
    0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x11, 0x01, 0x92, 0x00, 0x54, 0x00,
    0x38, 0x00, 0x10, 0x00}; ' ) ;
-    $decHeightBm = 'decH';
     $cw->Bitmap ($decHeightBm, -data => '
 #define decHeight_width 9
 #define decHeight_height 20
@@ -145,7 +152,6 @@ static char decHeight_bits[] = {
 sub _defineWBM
   {
     my $cw = shift ;
-    $incWidthBm = 'incW' ;
     $cw->Bitmap 
       ($incWidthBm, 
        -data =>'
@@ -156,7 +162,6 @@ static char incWidth_bits[] = {
    0xff, 0xff, 0x0f, 0x02, 0x00, 0x04, 0x04, 0x00, 0x02, 0x08, 0x00, 0x01,
    0x10, 0x80, 0x00};
 ' ) ;
-    $decWidthBm = 'decW';
     $cw->Bitmap ($decWidthBm, -data => '
 #define decWidth_width 20
 #define decWidth_height 9
@@ -325,7 +330,7 @@ Tk::Multi::Any - Tk virtual composite widget
 
  @ISA = qw(Tk::Derived Tk::Multi::Any);
 
- ( $VERSION ) = '$Revision: 1.4 $ ' =~ /\$Revision:\s+([^\s]+)/;
+ ( $VERSION ) = '$Revision: 1.5 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
  $printCmd = $defaultPrintCmd = 'lp -owhatever' ;
 
