@@ -1,9 +1,9 @@
 ############################################################
 #
-# $Header: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v 1.7 1999/05/31 11:45:54 domi Exp $
+# $Header: /var/lib/cvs/Tk_Multi/Multi/Toplevel.pm,v 1.9 2004/10/11 14:54:00 domi Exp $
 #
-# $Source: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v $
-# $Revision: 1.7 $
+# $Source: /var/lib/cvs/Tk_Multi/Multi/Toplevel.pm,v $
+# $Revision: 1.9 $
 # $Locker:  $
 # 
 ############################################################
@@ -13,11 +13,12 @@ package Tk::Multi::Toplevel ;
 use Carp ;
 
 use strict ;
+use Tk::Multi::Any ;
 require Tk::Toplevel;
 require Tk::Derived;
 
 use vars qw(@ISA $VERSION) ;
-$VERSION = sprintf "%d.%03d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 @ISA = qw(Tk::Derived Tk::Toplevel);
 
@@ -27,15 +28,16 @@ Tk::Widget->Construct('MultiTop') ;
 sub Populate
   {
     my ($cw,$args) = @_ ;
+    Tk::Multi::Any::normalize($cw,$args) ;
 
     require Tk::Multi::Manager ;
     require Tk::Multi::Frame ;
     require Tk::Multi::Text ;
     require Tk::ObjScanner ;
     
-    $cw->{manager} = delete $args->{manager} || $cw ;
-    $cw->{podName} = delete $args->{podName} ;
-    $cw->{podSection} = delete $args->{podSection} ;
+    $cw->{manager} = delete $args->{-manager} || $cw ;
+    $cw->{podName} = delete $args->{-podName} ;
+    $cw->{podSection} = delete $args->{-podSection} ;
 
     my $showDebug = sub 
       { 
@@ -47,7 +49,7 @@ sub Populate
                                     title => $t, 
                                     destroyable => 1);
             $f -> ObjScanner('caller' => $cw->{manager}, destroyable => 0) 
-              -> pack(expand => 1);
+              -> pack(-expand => 1);
           }
       } ;
 
@@ -56,7 +58,7 @@ sub Populate
       Frame(-relief => 'raised', -borderwidth => 2) -> pack(-fill => 'x');
 
     my $fmenu= $w_menu->Menubutton(-text => 'File', -underline => 0) ;
-    $fmenu-> pack(side => 'left' );
+    $fmenu-> pack(-side => 'left' );
 
     $cw->Advertise('fileMenu' => $fmenu->menu);
 
@@ -81,7 +83,7 @@ sub Populate
        'menu' => $w_menu ,
        'help' => sub {$cw->showHelp() ;}
       ) 
-        -> pack (expand => 1, fill => 'both');
+        -> pack (-expand => 1, -fill => 'both');
     
     $cw->Advertise('multiMgr' => $mmgr);
     # bind dump info 
@@ -89,8 +91,8 @@ sub Populate
     
 
     $cw->ConfigSpecs(
-                     'relief' => [$cw],
-                     'borderwidth' => [$cw],
+                     '-relief' => [$cw],
+                     '-borderwidth' => [$cw],
                      'DEFAULT' => [$cw]
                     ) ;
     $cw->Delegates
@@ -115,72 +117,74 @@ sub Populate
 sub menuCommand
   {
     my $cw = shift ;
-    my %args = @_ ;
-    my $name = $args{name};
+    my %args = Tk::Multi::Any::normalize($cw,@_) ;
+    my $name = $args{-name};
+    my $menu = $args{-menu} ;
 
-    unless (defined $cw->Subwidget($args{menu}))
+    unless (defined $cw->Subwidget($menu))
       {
         my $mb = $cw->Subwidget('menubar') -> 
-          Menubutton (-text => $args{menu}) ;
-        $mb-> pack ( fill => 'x' , side => 'left');
-        $cw->Advertise($args{menu} => $mb );
+          Menubutton (-text => $menu) ;
+        $mb-> pack ( -fill => 'x' , -side => 'left');
+        $cw->Advertise($menu => $mb );
         
         # first fill
-        $mb->command (-label => $name, command => $args{command}) ;
-        @{$cw->{menuItems}{$args{menu}}} = ($name);
+        $mb->command (-label => $name, -command => $args{-command}) ;
+        @{$cw->{menuItems}{$menu}} = ($name);
         return ;
       }
 
-    push @{$cw->{menuItems}{$args{menu}}}, $name;
+    push @{$cw->{menuItems}{$menu}}, $name;
 
     my %hash;
     my $i = 1 ;
-    map($hash{$_}= $i++, sort @{$cw->{menuItems}{$args{menu}}}) ;
+    map($hash{$_}= $i++, sort @{$cw->{menuItems}{$menu}}) ;
 
     my $pos = $hash{$name} == ($i-1) ? 'end' : $hash{$name} ;
-    $cw->Subwidget($args{menu}) -> menu -> insert
+    $cw->Subwidget($menu) -> menu -> insert
       (
        $pos,'command',
        -label => $name,
-       command => $args{command}
+       -command => $args{-command}
       );
   }
 
 sub menuRemove
   {
     my $cw = shift ;
-    my %args = @_ ; # name , menu
-    my $name = $args{name}; # can be an array ref
+    my %args = Tk::Multi::Any::normalize($cw,@_) ; # name , menu
+    my $name = $args{-name}; # can be an array ref
+    my $menu = $args{-menu};
 
     my %hash;
     my $i = 1;
-    map($hash{$_}= $i++, sort @{$cw->{menuItems}{$args{menu}}}) ;
+    map($hash{$_}= $i++, sort @{$cw->{menuItems}{$menu}}) ;
 
     my @array = ref($name) ? @$name : ($name) ;
     foreach (@array)
       {
         my $pos = $hash{$_} == ($i-1) ? 'end' : $hash{$_} ;
 
-        $cw->Subwidget($args{menu}) -> menu ->delete($pos) ;
+        $cw->Subwidget($menu) -> menu ->delete($pos) ;
         delete $hash{$_};
-        @{$cw->{menuItems}{$args{menu}}} = keys %hash ; # ugly
+        @{$cw->{menuItems}{$menu}} = keys %hash ; # ugly
       }
     
     # cleanup 
-    if (scalar @{$cw->{menuItems}{$args{menu}}} == 0)
+    if (scalar @{$cw->{menuItems}{$menu}} == 0)
       {
-        delete $cw->{menuItems}{$args{menu}};
-        $cw->Subwidget($args{menu})-> destroy ;
-        delete $cw->{SubWidget}{$args{menu}}; # Tk::mega bug workaround
+        delete $cw->{menuItems}{$menu};
+        $cw->Subwidget($menu)-> destroy ;
+        delete $cw->{SubWidget}{$menu}; # Tk::mega bug workaround
       }
   }
 
 sub showHelp
   {
     my $cw = shift ;
-    my %args = @_ ; 
-    my $podName = $args{pod} ;
-    my $podSection = $args{section} ;
+    my %args = $cw->normalize(@_) ; 
+    my $podName = $args{-pod} ;
+    my $podSection = $args{-section} ;
 
     require Tk::Pod::Text ;
     require Tk::Pod ;
@@ -226,7 +230,7 @@ Tk::Multi::Toplevel - Toplevel MultiManager
 
 =head1 SYNOPSIS
 
- use Multi::Toplevel ;
+ use Tk::Multi::Toplevel ;
 
  my $mw = MainWindow-> new ;
  
@@ -245,7 +249,7 @@ Tk::Multi::Toplevel - Toplevel MultiManager
  $p->add(
          'command', 
          -label => 'baz', 
-         command => sub {warn "invoked  File->baz\n";}
+         -command => sub {warn "invoked  File->baz\n";}
         );
 
 =head1 DESCRIPTION
@@ -447,9 +451,9 @@ this patch (http://www.xray.mpe.mpg.de/mailing-lists/ptk/1998-11/msg00033.html)
 
 =head1 AUTHOR
 
-Dominique Dumont, Dominique_Dumont@grenoble.hp.com
+Dominique Dumont, domi@komarr.grenoble.hp.com
 
-Copyright (c) 1998-1999 Dominique Dumont. All rights reserved.
+Copyright (c) 1997-1998,2004 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

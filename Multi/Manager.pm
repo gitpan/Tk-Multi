@@ -8,13 +8,14 @@ use Tk::Derived;
 use Tk::Frame;
 use Tk::Adjuster ;
 use Tie::IxHash ;
+use Tk::Multi::Any ;
 
 @ISA = qw(Tk::Derived Tk::Frame);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.5 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('MultiManager');
 
@@ -23,15 +24,16 @@ my $title_num = 0;
 sub Populate
   {
     my ($cw,$args) = @_ ;
-    
+    Tk::Multi::Any::normalize($cw,$args) ;
+
     require Tk::Menubutton;
 
-    my $title =  delete $args->{'title'} || delete $args->{'-title'} || 
-      'display';
+    my $title =  delete $args->{'-title'} || 'display';
 
-    $cw->{trace} = delete $args->{'trace'} ;
+    $cw->{trace} = delete $args->{'-trace'};
 
-    my $userMenu = delete $args->{menu} || delete $args->{-menu} ;
+    my $userMenu = delete $args->{-menu} ;
+
     unless (defined $userMenu)
       {
         $userMenu = $cw->Frame(-relief => 'raised', -borderwidth => 2);
@@ -39,18 +41,17 @@ sub Populate
       }
 
     $cw->{menu}= $userMenu -> Menubutton (-text => $title) 
-      -> pack(side => 'left' );
+      -> pack(-side => 'left' );
 
     # add help menu on the right side
     $cw->{help}= $userMenu -> Menubutton (-text => 'Help') 
-      -> pack(side => 'right') ;
+      -> pack(-side => 'right') ;
  
     # add global help if defined 
-    my $help = defined $args->{'help'} ? $args->{help} :
+    my $help = delete $args->{'-help'} ||
       "If you read this text and if the help menu has no other entry ".
         "than 'global', it means that the user of Tk::Multi did not provide ".
           "any help for the application you're using. Shame on him.";
-    delete $args->{'help'} if exists $args->{'help'}; #cleanup
 
     $cw->addHelp('global', $help);
 
@@ -60,13 +61,14 @@ sub Populate
     $cw->{slave} = \%sHash ;
 
     #my $obj = $cw->{windowFrame} = $cw -> Frame(bg => 'red')
-    #  ->pack(qw(fill both));
+    #  ->pack(qw(-fill both));
 
     $cw->ConfigSpecs(DEFAULT => [$cw],
-                    'width' => ['SELF'],
-                    'height' => ['SELF'],
+                    '-width' => ['SELF'],
+                    '-height' => ['SELF'],
 ) ;
     #$cw->Delegates(DEFAULT => 'SELF' ) ;
+    #print "args: ",keys %args,"\n";
     $cw->SUPER::Populate($args) ;
   }
 
@@ -77,14 +79,11 @@ sub Populate
 sub newSlave
   {
     my $cw = shift ;
-    my %args = @_ ;
+    my %args = Tk::Multi::Any::normalize($cw,@_) ;
 
+    my $title = $args{'-title'} ||= $cw->Class . "-" . $title_num++ ;
 
-    $args{'title'} = $args{'-title'} || $cw->Class . "-" . $title_num++
-      unless defined $args{'title'} ;
-    my $title =  $args{'title'} ;
-
-    my $slaveType = delete $args{'type'};
+    my $slaveType = delete $args{'-type'};
     croak("No type specified\n") unless defined $slaveType ;
 
     # add button if it doesn't exist
@@ -93,15 +92,15 @@ sub newSlave
         # display error message
         $cw->BackTrace("Window $title already exists\n");
       }
-    elsif (defined $args{before})
+    elsif (defined $args{-before})
       {
-        my $bef = delete $args{before} ;
+        my $bef = delete $args{-before} ;
         my $idx = $cw->{tiedSlave}->Indices($bef);
         # create the new entry in the tied hash and place it before
         # $bef widget
         $cw->{tiedSlave}->Splice($idx,0,$title => {})
       }
-    elsif (defined $args{side} and delete $args{side} eq 'top')
+    elsif (defined $args{-side} and delete $args{-side} eq 'top')
       {
         # create the new entry in the tied hash and put it on top
         $cw->{tiedSlave}->Unshift($title => {}) ; 
@@ -114,15 +113,14 @@ sub newSlave
 
     $cw->{slave}{$title}{show} = 1 ;
 
-    if (defined $args{'hidden'} )
+    if (defined $args{'-hidden'} )
       {
-        $cw->{slave}{$title}{'show'} = 0 if $args{'hidden'} == 1 ;
-        delete $args{'hidden'} ;
+        $cw->{slave}{$title}{'show'} = 0 if $args{'-hidden'} == 1 ;
+        delete $args{'-hidden'} ;
       }
-    
+
     # add help button if help is defined 
-    $cw->addHelp('on '.$title, delete $args{help}) if defined $args{'help'} ;
-    delete $args{'help'} if exists $args{'help'}; # cleanup
+    $cw->addHelp('on '.$title, delete $args{-help}) if defined $args{'-help'} ;
 
     # add control button
     my $topmenu = $cw->{menu}->menu ;
@@ -140,17 +138,17 @@ sub newSlave
       (
        -label => 'show', 
        -variable => \$var,
-       command => sub {$cw->updateVisi($title) ;}
+       -command => sub {$cw->updateVisi($title) ;}
       );
 
     $cw->{slave}{$title}{submenu} = $menu ;
 
-    my $destroyable = delete $args{'destroyable'} ;
+    my $destroyable = delete $args{'-destroyable'} ;
 
     # add widget and adjuster
     my $wd = $cw->{slave}{$title}{widget} = 
       $cw -> $slaveType ('menu_button' => $menu, 
-                            qw/relief raised borderwidth 4/,
+                            qw/-relief raised -borderwidth 4/,
                             %args);
     $cw->{slave}{$title}{adjuster} = $cw -> Adjuster (-widget => $wd);
 
@@ -158,7 +156,7 @@ sub newSlave
     if (defined $destroyable and $destroyable)
       {
         $menu->command(-label=>'destroy', 
-                       command => sub{$cw->destroySlave($title);} );
+                       -command => sub{$cw->destroySlave($title);} );
       }
 
     # bottom slave must not use the packAdjust method
@@ -184,7 +182,7 @@ sub addHelp
       sub 
         {
           require Tk::Dialog ;
-          $cw ->Dialog('title'=> "$label help", text => $help ) -> Show();
+          $cw ->Dialog('-title'=> "$label help", -text => $help ) -> Show();
         } ;
 
     $cw->{'help'} -> command (-label => $label, -command => $sub);
@@ -244,7 +242,7 @@ sub updateVisi
     print "$title previous showed is index $prevShowed\n" if $cw->{trace} ;
     print "$title next showed is index $nextShowed\n" if $cw->{trace} ;
 
-    my @pargs = qw/fill both expand 1 anchor n/;
+    my @pargs = qw/-fill both -expand 1 -anchor n/;
     my $currentW = $cw->{slave}{$title}{widget};
 
     # so that the master window update its size when a slave is hidden
@@ -258,7 +256,7 @@ sub updateVisi
             print "$title uses packAdjust\n" if $cw->{trace} ;
 
             my $nextWidget = $cw->{tiedSlave}-> Values($nextShowed)->{widget} ;
-            $currentW->pack(@pargs, before => $nextWidget );
+            $currentW->pack(@pargs, -before => $nextWidget );
             $cw->{slave}{$title}{adjuster}-> packAfter($currentW );
           }
         else
@@ -473,9 +471,9 @@ Destroy the slave
 
 =head1 AUTHOR
 
-Dominique Dumont, Dominique_Dumont@grenoble.hp.com
+Dominique Dumont, domi@komarr.grenoble.hp.com
 
-Copyright (c) 1997-1999 Dominique Dumont. All rights reserved.
+Copyright (c) 1997-1998,2004 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

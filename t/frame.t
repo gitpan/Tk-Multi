@@ -1,4 +1,6 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
+use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
 
 # Tk::Multi test
@@ -35,7 +37,7 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 $f->command(-label => 'Quit',  -command => sub{$mw->destroy;} );
 
 print "creating manager\n" if $trace ;
@@ -45,7 +47,7 @@ my $wmgr = $mw -> MultiManager
    'menu' => $w_menu,
    'trace' => $trace,
    'help' => undef  # special case, may happen
-  ) -> pack (qw/fill both expand 1/);
+  ) -> pack (qw/-fill both -expand 1/);
 
 print "ok ",$idx++,"\n";
 
@@ -61,7 +63,7 @@ foreach my $fidx (1 .. 10)
        print => sub {return "dummy print of data\n";}, 
        bg => 'yellow'
       ) ;
-    $frame -> Label(text => "some label inside for frame nb $fidx")->pack ;
+    $frame -> Label(-text => "some label inside for frame nb $fidx")->pack ;
 
     print "ok ",$idx++,"\n";
   }

@@ -6,7 +6,7 @@ use vars qw($printCmd $defaultPrintCmd $VERSION);
 
 use base qw(Tk::Derived Tk::Frame Tk::Multi::Any);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.5 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -23,17 +23,17 @@ Tk::Widget->Construct('MultiText');
 sub Populate
   {
     my ($cw,$args) = @_ ;
+    Tk::Multi::Any::normalize($cw,$args) ;
+
     require Tk::Label;
     require Tk::ROText;
 
     $cw->{_printCmdRef} = \$printCmd ;
-    my $data = delete $args->{'data'} || delete $args->{'-data'} ;
+    my $data = delete $args->{'-data'} ;
 
-    my $title = delete $args->{'title'} || delete $args->{'-title'} || 
-      'anonymous';
-    $cw ->{'title'} = $title ;
+    my $title = $cw ->{'title'} = delete $args->{'-title'} || 'anonymous';
 
-    my $menu = delete $args->{'menu_button'} || delete $args->{'-menu_button'};
+    my $menu = delete $args->{'-menu_button'};
     die "Multi window $title: missing menu_button argument\n" 
       unless defined $menu ;
 
@@ -43,11 +43,11 @@ sub Populate
     #$slaveWindow->bind ('<Button-3>', $subref);
     #Tk::bind($cw, '<Button-3>', $subref);
 
-    my $titleLabel = $cw->Label(text => $title.' display')-> pack(qw/fill x/) ;
+    my $titleLabel = $cw->Label(-text => $title.' display')-> pack(qw/-fill x/) ;
     $titleLabel -> bind('<Button-3>', $subref);
 
-    $menu->command(-label=>'print...', command => [$cw, 'print' ]) ;
-    $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
+    $menu->command(-label=>'print...', -command => [$cw, 'print' ]) ;
+    $menu->command(-label=>'clear', -command => [$cw, 'clear' ]);
 
     # print stuff
     $cw->{_printToFile} = 0;
@@ -59,11 +59,11 @@ sub Populate
     $cw->Advertise('text' => $slaveWindow) ;
 
     $cw->ConfigSpecs(
-                     'relief' => [$cw],
-                     'borderwidth' => [$cw],
-                     'scrollbars'=> [$slaveWindow, undef, undef,'osoe'],
-                     'width' => [$slaveWindow, undef, undef, 80],
-                     'height' => [$slaveWindow, undef, undef, 5],
+                     '-relief' => [$cw],
+                     '-borderwidth' => [$cw],
+                     '-scrollbars'=> [$slaveWindow, undef, undef,'osoe'],
+                     '-width' => [$slaveWindow, undef, undef, 80],
+                     '-height' => [$slaveWindow, undef, undef, 5],
                      'DEFAULT' => [$slaveWindow]
                     ) ;
     $cw->Delegates('command' => $menu, 
@@ -76,12 +76,12 @@ sub Populate
 
     $cw-> insertText (@$data) if defined $data ;
     $cw->yview('moveto', 1) ; # move diplay to the end
-  }    
+  }
 
 sub insertText
   {
     my $cw= shift ;
-    
+
     foreach (@_)
       {
         $cw->insert('end',$_) ;
@@ -201,9 +201,9 @@ Defines ressources for the config options.
 
 =head1 AUTHOR
 
-Dominique Dumont, Dominique_Dumont@grenoble.hp.com
+Dominique Dumont, domi@komarr.grenoble.hp.com
 
-Copyright (c) 1997-1998 Dominique Dumont. All rights reserved.
+Copyright (c) 1997-1998,2004 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

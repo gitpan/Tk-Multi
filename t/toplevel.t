@@ -1,4 +1,6 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
+use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
 
 ######################### We start with some black magic to print on failure.
@@ -45,7 +47,7 @@ foreach (qw/foo bar baz toto titi/)
 $p->add(
         'command', 
         -label => 'remove baz', 
-        command => sub
+        -command => sub
         {
           $p->menuRemove(name => 'baz', menu => 'example');
           $p->delete('end') ; # not very clean ...

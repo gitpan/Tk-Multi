@@ -3,11 +3,11 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
               'NAME'	   => 'Tk::Multi',
-              'VERSION' => '1.004',
+              'VERSION' => '1.006',
               'dist' => {COMPRESS=>'gzip -9f', SUFFIX => 'gz'},
               ($] >= 5.005 ?
-               (ABSTRACT   => 'Manages several Text or Canvas widgets',
-                AUTHOR     => 'Dominique Dumont (domi@barrayar.grenoble.hp.com)') : ()),
+               (ABSTRACT   => 'Manage together Text, Canvas or Frame widgets',
+                AUTHOR     => 'Dominique Dumont (domi@komarr.grenoble.hp.com)') : ()),
               'PREREQ_PM' =>
               {
                'Tk' => '800.013',

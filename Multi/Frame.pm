@@ -10,7 +10,7 @@ use vars qw($printCmd $defaultPrintCmd $VERSION);
 
 use base qw(Tk::Derived Tk::TFrame Tk::Multi::Any);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -27,22 +27,22 @@ Tk::Widget->Construct('MultiFrame');
 sub Populate
   {
     my ($cw,$args) = @_ ;
+    Tk::Multi::Any::normalize($cw,$args) ;
+
     require Tk::Label;
     require Tk::Frame;
 
     $cw->{_printCmdRef} = \$printCmd ;
 
-    my $title = delete $args->{'title'} || delete $args->{'-title'} || 
-      'anonymous';
-    $cw ->{'title'} = $title ;
+    my $title = $cw ->{'title'} = delete $args->{'-title'} || 'anonymous';
     $args->{-label} = [ -text => $title ]; # for TFrame;
-    $cw->{printSub} = delete $args->{print} ;
+    $cw->{printSub} = delete $args->{-print};
 
-    my $menu = delete $args->{'menu_button'} || delete $args->{'-menu_button'};
+    my $menu = delete $args->{'-menu_button'};
     die "Multi window $title: missing menu_button argument\n" 
       unless defined $menu ;
 
-    $menu->command(-label=>'print...', command => [$cw, 'print' ]) 
+    $menu->command(-label=>'print...', -command => [$cw, 'print' ]) 
       if defined $cw->{printSub};
 
     # print stuff
@@ -54,16 +54,16 @@ sub Populate
     $cw -> bind('<Button-3>', $subref);
 
     $cw->ConfigSpecs(
-                     'borderwidth' => [$cw, undef, undef, 2 ],
+                     '-borderwidth' => [$cw, undef, undef, 2 ],
                      -relief => [$cw, undef, undef,'groove'],
                      'DEFAULT' => [$cw]
                     ) ;
 
-    $cw->Delegates('command' => $menu, 
+    $cw->Delegates('-command' => $menu, 
                    DEFAULT => $cw) ;
 
     $cw->SUPER::Populate($args);
-  }    
+  }
 
 sub resetPrintCmd
   {
@@ -93,7 +93,7 @@ __END__
 
  use Tk::Multi::Frame ; 
 
- my $manager = yourWindow -> MultiManager 
+ my $manager = $yourWindow -> MultiManager 
   (
    menu => $menu_ref , # optionnal
    printSub => $sub_ref ,  # optionnal
@@ -195,11 +195,11 @@ Defines ressources for the config options.
 
 =head1 AUTHOR
 
-Dominique Dumont, Dominique_Dumont@grenoble.hp.com
+Dominique Dumont, domi@komarr.grenoble.hp.com
 
- Copyright (c) 1997-1999,2002 Dominique Dumont. All rights reserved.
- This program is free software; you can redistribute it and/or
- modify it under the same terms as Perl itself.
+ Copyright (c) 1997-1999,2002,2004 Dominique Dumont. All rights
+ reserved.  This program is free software; you can redistribute it
+ and/or modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 

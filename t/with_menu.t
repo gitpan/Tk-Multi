@@ -1,4 +1,6 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
+use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
 
 # Tk::Multi test
@@ -37,11 +39,12 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 $f->command(-label => 'Quit',  -command => sub{$mw->destroy;} );
 
-$mw -> Button (text => 'add', command => sub {$toto -> insertText("added\n")} ) 
-  -> pack(qw/fill x/) ;
+$mw -> Button (-text => 'add', 
+	       -command => sub {$toto -> insertText("added\n")} ) 
+  -> pack(qw/-fill x/) ;
 
 print "creating manager\n" if $trace ;
 my $wmgr = $mw -> MultiManager 
@@ -50,7 +53,7 @@ my $wmgr = $mw -> MultiManager
    'menu' => $w_menu,
    'trace' => $trace,
    'help' => 'You may use log-test->XXX->show menus to hide and show slaves'
-  ) -> pack (qw/fill both expand 1/);
+  ) -> pack (qw/-fill both -expand 1/);
 
 print "ok ",$idx++,"\n";
 
@@ -59,7 +62,7 @@ print "Creating sub window toto\n" if $trace ;
 $toto = $wmgr -> newSlave
   (
    'type'=>'MultiText',
-   'help' => 'Type anything you want in the test widget or click on the add button') ;
+   'help' => 'Click on the add button') ;
 
 print "ok ",$idx++,"\n";
 
@@ -103,8 +106,8 @@ $list->command(-label => 'display dummy',
 
 print "ok ",$idx++,"\n";
 
-$mw -> Button (text => 'destroy list slave', command => 
-               sub {$wmgr -> destroySlave('list')} ) 
+$mw -> Button (-text => 'destroy list slave', -
+	       command => sub {$wmgr -> destroySlave('list')} ) 
   -> pack ;
 
 print "ok ",$idx++,"\n";

@@ -10,7 +10,7 @@ use vars qw($printCmd $defaultPrintCmd $VERSION);
 
 use base qw(Tk::Derived Tk::Frame Tk::Multi::Any);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.5 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -27,29 +27,29 @@ Tk::Widget->Construct('MultiCanvas');
 sub Populate
   {
     my ($cw,$args) = @_ ;
+    Tk::Multi::Any::normalize($cw,$args) ;
+
     require Tk::Label;
     require Tk::Canvas;
 
     $cw->{_printCmdRef} = \$printCmd ;
 
-    my $title = delete $args->{'title'} || delete $args->{'-title'} || 
-      'anonymous';
-    $cw ->{'title'} = $title ;
+    my $title = $cw->{'title'} = delete $args->{'-title'} || 'anonymous';
 
-    my $menu = delete $args->{'menu_button'} || delete $args->{'-menu_button'};
-    die "Multi window $title: missing menu_button argument\n" 
+    my $menu = delete $args->{'-menu_button'};
+    die "Multi window $title: missing -menu_button argument\n" 
       unless defined $menu ;
 
-    my $titleLabel = $cw->Label(text => $title.' display')-> pack(qw/fill x/) ;
+    my $titleLabel = $cw->Label(-text => $title.' display')-> pack(qw/-fill x/) ;
 
-    $menu->command(-label=>'print...', command => [$cw, 'print' ]) ;
-    $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
+    $menu->command(-label=>'print...', -command => [$cw, 'print' ]) ;
+    $menu->command(-label=>'clear', -command => [$cw, 'clear' ]);
 
     # print stuff
     $cw->{_printToFile} = 0;
     $cw->{_printFile} = '';
 
-    my $slaveWindow = $cw -> Scrolled (qw/Canvas relief sunken bd 2/)
+    my $slaveWindow = $cw -> Scrolled (qw/Canvas -relief sunken -bd 2/)
       -> pack(qw/-fill both -expand 1/) ;
 
     my $subref = sub {$menu->Popup(-popover => 'cursor', -popanchor => 'nw')};
@@ -57,11 +57,11 @@ sub Populate
     $titleLabel -> bind('<Button-3>', $subref);
 
     $cw->ConfigSpecs(
-                     'relief' => [$cw, undef, undef, 'raised'],
-                     'borderwidth' => [$cw, undef, undef, 2 ],
-                     'scrollbars'=> [$slaveWindow, undef, undef,'osoe'],
-                     'width' => [$slaveWindow, undef, undef, 400],
-                     'height' => [$slaveWindow, undef, undef, 200],
+                     '-relief' => [$cw, undef, undef, 'raised'],
+                     '-borderwidth' => [$cw, undef, undef, 2 ],
+                     '-scrollbars'=> [$slaveWindow, undef, undef,'osoe'],
+                     '-width' => [$slaveWindow, undef, undef, 400],
+                     '-height' => [$slaveWindow, undef, undef, 200],
                      'DEFAULT' => [$slaveWindow]
                     ) ;
     $cw->Delegates('command' => $menu, 
@@ -86,10 +86,10 @@ sub resetPrintCmd
 sub printableDump
   {
     my $cw= shift ;
-    my $array = $cw->cget('scrollregion') ;
+    my $array = $cw->cget('-scrollregion') ;
 
     return  $cw-> postscript
-      (qw/-colormode gray pageheight 29c pagewidth 21c/,
+      (qw/-colormode gray -pageheight 29c -pagewidth 21c/,
        -width        => $array->[2],
        -height       => $array->[3]);
   }
@@ -210,7 +210,11 @@ Defines ressources for the config options.
 
 =head1 AUTHOR
 
-Dominique Dumont, Dominique_Dumont@grenoble.hp.com
+Dominique Dumont, domi@komarr.grenoble.hp.com
+
+Copyright (c) 1997-1998,2004 Dominique Dumont. All rights reserved.
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 

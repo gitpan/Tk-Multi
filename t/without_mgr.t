@@ -1,4 +1,6 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
+use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
 
 # Tk::Multi test
@@ -34,11 +36,11 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 $f->command(-label => 'Quit',  -command => sub{$mw->destroy;} );
 
 my $lm = $w_menu->Menubutton(-text => 'list menu', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 print "Creating sub window list\n" if $trace ;
 my $list = $mw -> MultiText( title => 'list',
                              'menu_button' => $lm->menu ,
@@ -47,19 +49,19 @@ my $list = $mw -> MultiText( title => 'list',
                             # height => '15', 
                              data => [1 .. 20] 
                            ) -> packAdjust(qw/-fill both -expand 1/);
-                           #) -> pack(qw/fill both expand 1/);
+                           #) -> pack(qw/-fill both -expand 1/);
 
 # This is a nasty trick, but DoWhenIdle does not work ...
 $list->after(500,sub{$list->packPropagate(0);}) ;
 
-$list->command(-label => 'display dummy',  
+$list->command(-label => 'add dummy text',  
                -command => sub{$list->insertText("added dummy\n");} );
 
 print "ok ",$idx++,"\n";
 
 print "Creating sub window debug\n" if $trace ;
 my $dm = $w_menu->Menubutton(-text => 'debug menu', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 my $debug = $mw -> MultiText( 
                              'relief' => 'sunken' ,
                              'menu_button' => $dm->menu ,

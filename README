@@ -9,16 +9,7 @@ a menu.
 Tk::Multi::* widgets uses Adjuster to increase, decrease the window
 size, and a menu to print its content.
 
-Suggested DSLI entry for the Ptk module list:
-
-Multi::
-  Manager     bdpO  Manages the Multi widget in a Multi frame  DDUMONT 
-  Toplevel    bdpO  Multi manager in a Toplevel widget         DDUMONT 
-  Canvas      bdpO  A Canvas in the Multi frame                DDUMONT 
-  Text        bdpO  A  text widget in the Multi frame          DDUMONT 
-  Frame       bdpO  A TFrame widget in the Multi frame         DDUMONT 
-
-This module was written with perl5.00502 and needs Tk800.013 to work.
+This module was last tested with perl5.00804 and needs Tk804.027.
 
 See the embedded documentation in the module for more details.
 
@@ -46,7 +37,7 @@ Tk::Multi::Any class will be removed.
 Legal mumbo jumbo:
 ------------------
 
- Copyright (c) 1997-1999,2002 Dominique Dumont. All rights reserved.
+ Copyright (c) 1997-1999,2002,2004 Dominique Dumont. All rights reserved.
  This program is free software; you can redistribute it and/or
  modify it under the same terms as Perl itself.
 

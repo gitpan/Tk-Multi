@@ -1,4 +1,6 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
+use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
 
 # Tk::Multi test
@@ -38,23 +40,23 @@ print "creating 2nd manager without menu\n" if $trace ;
 
 my $popupSub = sub 
         {
-          $mw ->Dialog('title'=> "popup help", 
-                       text => 'dummy test help',
-                       bg => 'red'
+          $mw ->Dialog('-title'=> "popup help", 
+                       -text => 'dummy test help',
+                       -bg => 'red'
                       ) -> Show();
         } ;
 
 print "ok ",$idx++,"\n";
 my $wmgr2 = $mw -> MultiManager ( 'title' => 'log test',
                                 help => $popupSub ) 
-  -> pack (qw/fill both expand 1/);
+  -> pack (qw/-fill both -expand 1/);
 print "ok ",$idx++,"\n";
 my $list2 = $wmgr2 -> newSlave('type'=>'MultiText',) ;
 my $list3 = $wmgr2 -> newSlave('type'=>'MultiText', title =>'another list') ;
 
 print "ok ",$idx++,"\n";
 
-$mw -> Button (text => 'quit', command => sub {$mw->destroy;})-> pack ;
+$mw -> Button (-text => 'quit', -command => sub {$mw->destroy;})-> pack ;
 
 MainLoop ; # Tk's
 

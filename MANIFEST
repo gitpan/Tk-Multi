@@ -14,3 +14,4 @@ t/with_menu.t
 t/canvas.t
 t/frame.t
 t/toplevel.t
+META.yml                                 Module meta-data (added by MakeMaker)
