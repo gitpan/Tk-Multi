@@ -46,7 +46,7 @@ Tk::Multi::Any class will be removed.
 Legal mumbo jumbo:
 ------------------
 
- Copyright (c) 1997-1999 Dominique Dumont. All rights reserved.
+ Copyright (c) 1997-1999,2002 Dominique Dumont. All rights reserved.
  This program is free software; you can redistribute it and/or
  modify it under the same terms as Perl itself.
 

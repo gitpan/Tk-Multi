@@ -85,7 +85,7 @@ __END__
 
 =head1 NAME
 
-Tk::Multi::Frame - Tk composite widget with a scroll window and more
+  Tk::Multi::Frame - A TFrame widget managed by Tk::Multi
 
 =head1 SYNOPSIS
 
@@ -101,7 +101,8 @@ Tk::Multi::Frame - Tk composite widget with a scroll window and more
   ) -> pack ();
 
  # Don't pack it, the manager will do it
- my $w1 = $manager -> newSlave('type' => 'MultiFrame', 'title' => 'a_label');
+ my $w1 = $manager -> newSlave('type' => 'MultiFrame', 
+                               'title' => 'a_label');
 
 =head1 DESCRIPTION
 
@@ -111,7 +112,7 @@ This composite widget features :
 
 =item *
 
-a scrollable Frame
+a frame with a title (e.g. a L<Tk::TFrame>).
 
 =item *
 
@@ -170,10 +171,6 @@ method to set the appropriate print command on your machine. Note that
 using this method will affect all other Tk::Multi::Frame object since the
 modified variable is not an instance variable but a class variable.
 
-=head2 clear
-
-clear all items in the canvas.
-
 =head1 Delegated methods
 
 By default all widget method are delegated to the TFrame widget. Excepted :
@@ -183,13 +180,16 @@ By default all widget method are delegated to the TFrame widget. Excepted :
 Delegated to the menu entry managed by Multi::Manager. Will add a new command
 to the aforementionned menu.
 
+=head1 NOTE
+
+If you want to use a scrolled frame, you pack a Tk::Pane within the
+frame provided by this widget. See L<Tk::Pane>.
+
 =head1 TO DO
 
 I'm not really satisfied with print management. May be one day, I'll write a 
 print management composite widget which will look like Netscape's print 
 window. But that's quite low on my priority list. Any volunteer ?
-
-Dragging middle mouse button to scroll the canvas.
 
 Defines ressources for the config options.
 
@@ -197,8 +197,13 @@ Defines ressources for the config options.
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
 
+ Copyright (c) 1997-1999,2002 Dominique Dumont. All rights reserved.
+ This program is free software; you can redistribute it and/or
+ modify it under the same terms as Perl itself.
+
 =head1 SEE ALSO
 
-perl(1), Tk(3), Tk::Multi(3), Tk::Multi::Manager(3)
+perl(1), L<Tk>, L<Tk::Multi>, L<Tk::Multi::Manager>, L<Tk::TFrame>,
+L<Tk::Pane>
 
 =cut

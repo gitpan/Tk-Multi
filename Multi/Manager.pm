@@ -379,6 +379,10 @@ L<Tk::Multi::Text>
 
 L<Tk::Multi::Canvas>
 
+=item *
+
+L<Tk::Multi::Frame>
+
 =back
 
 =head1 Constructor configuration options
@@ -477,7 +481,8 @@ modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-perl(1), Tk(3), Tk::Multi::Text(3), Tk::Multi::Canvas(3)
+perl(1), Tk(3), L<Tk::Multi::Text>, L<Tk::Multi::Canvas>,
+L<Tk::Multi::Frame>, L<Tk::Multi::Toplevel>
 
 =cut
 

@@ -8,7 +8,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..4\n"; }
+BEGIN { $| = 1; print "1..13\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Tk ;
 use ExtUtils::testlib;
@@ -49,19 +49,23 @@ my $wmgr = $mw -> MultiManager
 
 print "ok ",$idx++,"\n";
 
-print "Creating frame sub window \n" if $trace ;
-my $frame = $wmgr -> newSlave
-  (
-   'type'=>'MultiFrame',
-   title => 'some frame uh?',
-   # this will be sent to the printer ...
-   print => sub {return "dummy print of data\n";}, 
-   bg => 'yellow'
-  ) ;
+print "Creating 10 frame sub windows \n" if $trace ;
 
-$frame -> Label(text => 'some label inside')->pack ;
+foreach my $fidx (1 .. 10)
+  {
+    my $frame = $wmgr -> newSlave
+      (
+       'type'=>'MultiFrame',
+       title => "frame $fidx",
+       # this will be sent to the printer ...
+       print => sub {return "dummy print of data\n";}, 
+       bg => 'yellow'
+      ) ;
+    $frame -> Label(text => "some label inside for frame nb $fidx")->pack ;
 
-print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n";
+  }
+
 MainLoop ; # Tk's
 
 print "ok ",$idx++,"\n";

@@ -1,3 +1,8 @@
+2002-09-02  Dominique Dumont  <domi@komarr.grenoble.hp.com> (v 1.004)
+
+	* Multi/Frame.pm : modified doc to remove reference of scrolled
+	frames. They are not scrollable.
+
 1999-05-31  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	v 1.003
