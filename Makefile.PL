@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
               'NAME'	   => 'Tk::Multi',
-              'VERSION' => '1.002',
+              'VERSION' => '1.003',
               'dist' => {COMPRESS=>'gzip -9f', SUFFIX => 'gz'},
               ($] >= 5.005 ?
                (ABSTRACT   => 'Manages several Text or Canvas widgets',
@@ -13,6 +13,7 @@ WriteMakefile(
                'Tk' => '800.013',
                'Tk::TFrame' => 0,
                'Tk::Pod' => 0,
+               'Tk::ObjScanner' => 1.016,
                'Tie::IxHash' => 0
               }
              );

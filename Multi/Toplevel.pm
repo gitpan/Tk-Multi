@@ -1,9 +1,9 @@
 ############################################################
 #
-# $Header: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v 1.6 1999/04/02 11:13:38 domi Exp $
+# $Header: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v 1.7 1999/05/31 11:45:54 domi Exp $
 #
 # $Source: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Locker:  $
 # 
 ############################################################
@@ -17,7 +17,7 @@ require Tk::Toplevel;
 require Tk::Derived;
 
 use vars qw(@ISA $VERSION) ;
-$VERSION = sprintf "%d.%03d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 @ISA = qw(Tk::Derived Tk::Toplevel);
 
@@ -46,7 +46,7 @@ sub Populate
             my $f = $cw -> newSlave(type => 'MultiFrame', 
                                     title => $t, 
                                     destroyable => 1);
-            $f -> ObjScanner('caller' => $cw->{manager}) 
+            $f -> ObjScanner('caller' => $cw->{manager}, destroyable => 0) 
               -> pack(expand => 1);
           }
       } ;
