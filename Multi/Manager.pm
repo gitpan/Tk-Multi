@@ -1,41 +1,34 @@
 package Tk::Multi::Manager;
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT_OK $errno);
+use vars qw($VERSION @ISA $errno);
 
 use Carp ;
-use Tk ;
-use AutoLoader ;
+use Tk::Derived;
+use Tk::Frame;
 
-require Exporter;
-
-@ISA = qw(Tk::Frame);
+@ISA = qw(Tk::Derived Tk::Frame);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$VERSION = '0.01';
+( $VERSION ) = '$Revision: 1.8 $ ' =~ /\$Revision:\s+([^\s]+)/;
 
 Tk::Widget->Construct('MultiManager');
 
-#stubs
-sub hide ;
-sub show ;
-sub updateVisi ;
-sub destroySlave ;
-
-# Autoload methods go after =cut, and are processed by the autosplit program.
 
 sub Populate
   {
     my ($cw,$args) = @_ ;
     
+    require Tk::Menubutton;
+
     my $title = 'display';
     $title = delete $args->{title} if defined $args->{title} ;
     
     if (defined $args->{menu})
       {
-        $cw->{dodu}{menu}= $args->{menu} -> Menubutton (-text => $title) 
+        $cw->{menu}= $args->{menu} -> Menubutton (-text => $title) 
           -> pack(side => 'left' );
         delete $args->{menu} ;
       }
@@ -43,11 +36,11 @@ sub Populate
       {
         my $w_menu = $cw->Frame(-relief => 'raised', -borderwidth => 2);
         $w_menu->pack(-fill => 'x');
-        $cw->{dodu}{menu}= $w_menu -> Menubutton (-text => $title) 
+        $cw->{menu}= $w_menu -> Menubutton (-text => $title) 
           -> pack(side => 'left') ;
       }
 
-    my $obj = $cw->{dodu}{windowFrame} = $cw -> Frame -> pack ;
+    my $obj = $cw->{windowFrame} = $cw -> Frame -> pack ;
 
     $cw->ConfigSpecs(DEFAULT => [$obj]) ;
     $cw->Delegates(DEFAULT => $obj) ;
@@ -69,42 +62,42 @@ sub newSlave
     croak("No type specified\n") unless defined $slaveType ;
 
     # add button if it doesn't exist
-    if (defined $cw->{dodu}{menu}{$title})
+    if (defined $cw->{menu}{$title})
       {
         # display error message
         die "Window $title already exists\n";
       }
  
-    $cw->{dodu}{'show'}{$title} = 1 ;
+    $cw->{'show'}{$title} = 1 ;
     if (defined $args{'hidden'} )
       {
-        $cw->{dodu}{'show'}{$title} = 0 if $args{'hidden'} == 1 ;
+        $cw->{'show'}{$title} = 0 if $args{'hidden'} == 1 ;
         delete $args{'hidden'} ;
       }
     
-    if (defined $cw->{dodu}{slave}{$title})
+    if (defined $cw->{slave}{$title})
       {
         $cw->updateVisi($title) ;
-        return $cw->{dodu}{slave}{$title} ;
+        return $cw->{slave}{$title} ;
       };
 
-    my $frame = $cw -> {dodu}{windowFrame} ;
+    my $frame = $cw -> {windowFrame} ;
      
-    my $topmenu = $cw->{dodu}{menu} ;
+    my $topmenu = $cw->{menu} ;
     $topmenu -> cascade(-label => $title ) ;
 
     my $cm = $topmenu -> cget(-menu);
     my $menu = $cm->Menu;
     $topmenu->entryconfigure($title, -menu => $menu);
     $menu->checkbutton(-label => 'show', 
-                       -variable => \$cw->{dodu}{'show'}{$title},
+                       -variable => \$cw->{'show'}{$title},
                       command => sub {$cw->updateVisi($title) ;});
 
-    $cw->{dodu}{submenu}{$title} = $menu ;
+    $cw->{submenu}{$title} = $menu ;
 
     my $destroyable = delete $args{'destroyable'} ;
 
-    $cw->{dodu}{slave}{$title} = 
+    $cw->{slave}{$title} = 
       $frame -> $slaveType ('menu_button' => $menu, %args);
 
     if (defined $destroyable and $destroyable)
@@ -113,11 +106,66 @@ sub newSlave
                        command => sub{$cw->destroySlave($title);} );
       }
 
-    $cw->{dodu}{slave}{$title} -> pack if $cw->{dodu}{'show'}{$title};
+    $cw->{slave}{$title} -> pack if $cw->{'show'}{$title};
 
-    return $cw->{dodu}{slave}{$title} ;
+    return $cw->{slave}{$title} ;
   }
 
+
+sub hide 
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    $cw->{'show'}{$title} = 0;
+    $cw-> updateVisi($title) ;
+  }
+
+sub show 
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    $cw->{'show'}{$title} = 1;
+    $cw-> updateVisi($title) ;
+  }
+
+sub updateVisi
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    
+    if ($cw->{'show'}{$title})
+      {
+        #raise it
+        $cw->{slave}{$title} -> pack ;
+      }
+    else
+      {
+        #hide it
+        $cw->{slave}{$title} -> packForget ;
+      }
+  }
+
+sub destroySlave
+  {
+    my $cw = shift ;
+    my $title = shift ;
+
+    die "Slave $title does not exist\n" 
+      unless defined $cw->{slave}{$title} ;
+
+    # retrieve actual menu object from the MenuButtom
+    my $cm = $cw->{menu} -> cget(-menu);
+
+    $cw->{slave}{$title}->destroy;
+    $cw->{submenu}{$title}->destroy;
+    
+    # delete the actual Menu entry from topmenu
+    $cm -> delete($title) ;
+
+    delete $cw->{'show'}{$title} ;
+    delete $cw->{submenu}{$title} ;
+    delete $cw->{slave}{$title} ;
+  }
 
 1;
 __END__
@@ -169,13 +217,28 @@ manager.
 =head2 newSlave('type' => 'MultiXXX', 'title'=> 'name', ['hidden' => 1] ) ;
 
 Create a new slave to manager. Returns the slave widget object. 
- 'type' specifies the kind of Multi widget (ex MultiText).
- 'title' specifies the title of the widget (mandatory).
- 'hidden' specifies whether the widget is to be packed tight now or not 
-(default 0)
- 'destroyable' A 'destroy' button is created if this parameter is defined (default no).
 
+=over 4
+
+=item type
+
+specifies the kind of Multi widget (ex MultiText).
+
+=item title
+
+specifies the title of the widget (mandatory).
+
+=item hidden
+
+specifies whether the widget is to be packed tight now or not 
+(default 0)
+
+=item destroyable
+
+a 'destroy' button is created if this parameter is defined (default no).
 Returns the slave widget reference.
+
+=back
 
 =head2 hide('name of the slave');
 
@@ -205,60 +268,3 @@ perl(1), Tk(3), Tk::Multi::Text(3)
 
 =cut
 
-# '
-# autoload methods
- 
-sub hide 
-  {
-    my $cw = shift ;
-    my $title = shift ;
-    $cw->{dodu}{'show'}{$title} = 0;
-    $cw-> updateVisi($title) ;
-  }
-
-sub show 
-  {
-    my $cw = shift ;
-    my $title = shift ;
-    $cw->{dodu}{'show'}{$title} = 1;
-    $cw-> updateVisi($title) ;
-  }
-
-sub updateVisi
-  {
-    my $cw = shift ;
-    my $title = shift ;
-    
-    if ($cw->{dodu}{'show'}{$title})
-      {
-        #raise it
-        $cw->{dodu}{slave}{$title} -> pack ;
-      }
-    else
-      {
-        #hide it
-        $cw->{dodu}{slave}{$title} -> packForget ;
-      }
-  }
-
-sub destroySlave
-  {
-    my $cw = shift ;
-    my $title = shift ;
-
-    die "Slave $title does not exist\n" 
-      unless defined $cw->{dodu}{slave}{$title} ;
-
-    # retrieve actual menu object from the MenuButtom
-    my $cm = $cw->{dodu}{menu} -> cget(-menu);
-
-    $cw->{dodu}{slave}{$title}->destroy;
-    $cw->{dodu}{submenu}{$title}->destroy;
-    
-    # delete the actual Menu entry from topmenu
-    $cm -> delete($title) ;
-
-    delete $cw->{dodu}{'show'}{$title} ;
-    delete $cw->{dodu}{submenu}{$title} ;
-    delete $cw->{dodu}{slave}{$title} ;
-  }

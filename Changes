@@ -18,3 +18,8 @@ Revision history for Perl extension Tk::Log.
 0.2  6/2/98
         - Clean up usage of Autoloader. Added stub functions
 
+0.3 11/2/98
+        Added changes kindly suggested by Achim Bonnet
+        - Autoload was not a good idea. Removed
+        - removed print left from debug days
+        - better start-up time

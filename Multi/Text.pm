@@ -1,14 +1,15 @@
 package Tk::Multi::Text ;
-require Tk::ErrorDialog; 
 
 use strict;
-use vars qw(@ISA $printCmd $defaultPrintCmd);
-use Tk::ROText;
-use AutoLoader ;
+use Tk::Derived;
+use Tk::Frame;
 
-require Exporter;
+use vars qw(@ISA $printCmd $defaultPrintCmd $VERSION);
 
-@ISA = qw(Tk::Frame);
+@ISA = qw(Tk::Derived Tk::Frame);
+
+( $VERSION ) = '$Revision: 1.7 $ ' =~ /\$Revision:\s+([^\s]+)/;
+
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
@@ -16,16 +17,6 @@ require Exporter;
 $printCmd = $defaultPrintCmd = 'lp -ol70 -otl66 -o12 -olm10' ;
 
 Tk::Widget->Construct('MultiText');
-
-#stubs
-sub resize ;
-sub setSize ;
-sub insertText ;
-sub print ;
-sub doPrint ;
-sub hide ;
-sub clear ;
-sub setPrintCmd ;
 
 # Preloaded methods go here.
 
@@ -35,6 +26,9 @@ sub Populate
   {
     my ($cw,$args) = @_ ;
     
+    require Tk::Label;
+    require Tk::ROText;
+
     my $label = delete $args->{'label'} ;
 
     my $sf = $cw -> Frame ->pack ;
@@ -44,18 +38,15 @@ sub Populate
       if defined $title  ;
 
     $title = defined $title ? $title : 'anonymous' ;
-    $cw ->{dodu}{'title'} = $title ;
-
-    print "Creating window $title\n";
+    $cw ->{'title'} = $title ;
 
     if (defined $label)
       {
-        $cw ->{dodu}{'label'}  = $label ;
-        $cw -> Label (textvariable => \$cw ->{dodu}{'label'})
+        $cw ->{'label'}  = $label ;
+        $cw -> Label (textvariable => \$cw ->{'label'})
           -> pack ;
       }
 
-    print "adding menus\n";
     my $menu = delete $args->{'menu_button'} ;
     die "MultiText: missing menu_button argument\n" unless defined $menu ;
 
@@ -64,8 +55,6 @@ sub Populate
     $menu->command(-label=>'print', command => [$cw, 'print' ]) ;
     $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
     
-    print "Creating ROtext $title\n";
-
     # text window
     my $textWindow = $cw -> ROText
       (relief => 'sunken', bd => '2', setgrid => 'true', height => 5);
@@ -92,11 +81,6 @@ sub Populate
   }
 
 
-
-1;
-__END__
-
-
 sub resize
   {
     my $cw= shift ;
@@ -104,7 +88,14 @@ sub resize
     
     my $h = $cw -> cget('height') ;
     my $nh = $h+$inc ;
-    $cw -> configure('height' => $nh) if $nh > 4 ;
+    if ($nh > 4)
+      {
+        $cw -> configure('height' => $nh);
+      }
+    else
+      {
+        $cw -> bell;
+      }
   }
 
 sub setSize
@@ -131,7 +122,7 @@ sub print
     my $cw= shift ;
 
     my $popup = $cw -> Toplevel ;
-    $popup -> title ($cw->{dodu}{'title'}.' print query') ;
+    $popup -> title ($cw->{'title'}.' print query') ;
     $popup -> grab ;
     $popup -> Label(text => 'modify print command as needed :') -> pack ;
     $popup -> Entry(textvariable => \$printCmd) -> pack(fill => 'x') ;
@@ -150,8 +141,8 @@ sub doPrint
   {
     my $cw= shift ;
     open(POUT,"|$printCmd") or die "Can't open print pipe $!\n";
-    print POUT $cw ->{dodu}{'label'},"\n\n" 
-      if defined $cw ->{dodu}{'label'} ;
+    print POUT $cw ->{'label'},"\n\n" 
+      if defined $cw ->{'label'} ;
     print POUT $cw->get('0.0','end') ;
     close POUT or die "print command failed: $!\n";
   }
@@ -185,6 +176,11 @@ sub setPrintCmd
     $printCmd = shift ;
   }
 
+
+1;
+__END__
+
+
 # Below is the stub of documentation for your module. You better edit it!
 
 =head1 NAME
@@ -210,18 +206,33 @@ Tk::Multi::Text - Tk composite widget with a scroll window and more
 
 This composite widget features :
 
-- a scrolable read-only text window (based on ROtext)
-- 2 buttons ('++' and '--') to resize the window. (I should use packAdjust but I couldn't get it to work well. I may do it later)
-- a print button (The shell print command may be modified by setting 
+=over 4
+
+=item *
+
+a scrollable read-only text window (based on ROtext)
+
+=item *
+
+2 buttons ('++' and '--') to resize the window. (I should use packAdjust but I couldn't get it to work well. I may do it later)
+
+=item *
+
+a print button (The shell print command may be modified by setting 
 $Tk::Multi::Text::printCmd to the appropriate shell command. By default, it is
 set to 'lp -ol70 -otl66 -o12 -olm10') 
-- a clear button
+
+=item *
+
+a clear button
+
+=back
 
 This widget will forward all unrecognize commands to the ROtext object.
 
 Note that this widget should be created only by the Multi::Manager. 
 
-=head1 Additional configuration options
+=head1 WIDGET-SPECIFIC OPTIONS
 
 =head2 title
 
@@ -233,7 +244,7 @@ The log window feature a set of menu items which must be added in a menu.
 This menu ref must be passed with the menu_button prameter 
 to the object during its instaciation
 
-=head1 Additional methods
+=head1 WIDGET-SPECIFIC METHODS
 
 =head2 setSize( heigth, [ width ])
 
