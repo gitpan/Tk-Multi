@@ -1,3 +1,8 @@
+v0.71: 1998-08-18  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	* All (except Any): Changed version string so that CPAN does not
+	get confused
+
 v0.7: 1998-08-13  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* Multi::Any is deprecated (was a bad idea :-( )

@@ -13,7 +13,7 @@ use Tie::IxHash ;
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$VERSION = substr q$Revision: 1.11 $, 10;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.1 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('MultiManager');
 

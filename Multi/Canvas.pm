@@ -11,7 +11,7 @@ use vars qw(@ISA $printCmd $defaultPrintCmd $VERSION);
 
 @ISA = qw(Tk::Derived Tk::Frame Tk::Multi::Any);
 
-$VERSION = substr q$Revision: 1.4 $, 10;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.1 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
