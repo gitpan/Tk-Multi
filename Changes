@@ -1,7 +1,19 @@
+1999-04-06  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	v 1.002
+	* added depandancy on Tk::TFrame in Makefile.PL
+	* Multi/Frame.pm (printableDump): corrected doc
+
+	v 1.001
+	* Added Tk::MultiFrame widget
+	* Uses Tk::Adjuster from Tk 800.013
+	* various bug fixes
+
 v0.80 1998-12-18  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* added Tk::Multi::Toplevel widget
-
+	* put back Tk::Multi::Any for print stuff.
+	
 v0.73 1998-12-15  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* Some reference to the late Tk::Multi::Any was left

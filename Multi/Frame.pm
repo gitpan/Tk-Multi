@@ -10,7 +10,7 @@ use vars qw($printCmd $defaultPrintCmd $VERSION);
 
 use base qw(Tk::Derived Tk::TFrame Tk::Multi::Any);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -96,6 +96,7 @@ Tk::Multi::Frame - Tk composite widget with a scroll window and more
  my $manager = yourWindow -> MultiManager 
   (
    menu => $menu_ref , # optionnal
+   printSub => $sub_ref ,  # optionnal
    title => "windows" # optionnal
   ) -> pack ();
 
@@ -114,13 +115,11 @@ a scrollable Frame
 
 =item *
 
-A print button (The shell print command may be modified by setting 
+A print button (if the printSub parameter was provided)
+
+(The shell print command may be modified by setting 
 $Tk::Multi::Frame::printCmd to the appropriate shell command. By default, 
 it is set to 'lp -opostscript') 
-
-=item *
-
-a clear button
 
 =back
 
@@ -132,7 +131,7 @@ Note that this widget should be created only by the Multi::Manager.
 
 =head2 title
 
-Some text which will be displayed above the test window. 
+The frame title (See L<Tk::TFrame>)
 
 =head2 menu_button
 
@@ -140,11 +139,14 @@ The log window feature a set of menu items which must be added in a menu.
 This menu ref must be passed with the menu_button prameter 
 to the object during its instaciation
 
+=head2 printSub
+
+By itself, a frame cannot be printed. So if the user wants to print
+some informations related to what's packed inside the frame, he must
+provide a sub ref which will return a string. This string will be
+printed as is by the widget.
+
 =head1 WIDGET-SPECIFIC METHODS
-
-=head2 setSize( heigth, [ width ])
-
-Will resize the canvas window. 
 
 =head2 print
 
@@ -174,7 +176,7 @@ clear all items in the canvas.
 
 =head1 Delegated methods
 
-By default all widget method are delegated to the Text widget. Excepted :
+By default all widget method are delegated to the TFrame widget. Excepted :
 
 =head2 command(-label => 'some text', -command => sub {...} )
 

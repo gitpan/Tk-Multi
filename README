@@ -1,8 +1,7 @@
 
-
 Tk_Multi is a set of Tk composite widget to allow you to manage
-several scrolled Text or Canvas (or your own Multi widget) widgets in
-your Toplevel window. 
+several scrolled Text or Canvas or TFrame (aka titled frame) widgets
+in your Toplevel window.
 
 The manager allows you to hide or show any managed text window through
 a menu.
@@ -16,10 +15,10 @@ Multi::
   Manager     bdpO  Manages the Multi widget in a Multi frame  DDUMONT 
   Toplevel    bdpO  Multi manager in a Toplevel widget         DDUMONT 
   Canvas      bdpO  A Canvas in the Multi frame                DDUMONT 
-  Text        bdpO  A  text wirdget in the Multi frame         DDUMONT 
+  Text        bdpO  A  text widget in the Multi frame          DDUMONT 
+  Frame       bdpO  A TFrame widget in the Multi frame         DDUMONT 
 
-This module was written with perl5.00502 and now works fine with
-Tk800.012.
+This module was written with perl5.00502 and needs Tk800.013 to work.
 
 See the embedded documentation in the module for more details.
 
@@ -31,24 +30,17 @@ Note that this module is in beta state. Its interface may still change
 I'd like people who actually use this module for their application to
 drop me a short note about what they're using this module for.
 
-Many thanks to Larry W. Virden, Achim Bohnet for all the tests, patches
-(and reports) they made. Many bugs were fixed and improvements were 
-included thanks to their efforts.
+Many thanks to Larry W. Virden, Achim Bohnet for all the tests,
+patches (and reports) they made. Many bugs were fixed and improvements
+were included thanks to their efforts.
 
 
 TO DO (well, bugs...): 
 ----------------------
 
-- There's some kind of geometry or size conflict between the Adjuster,
-the frames that are created by the Multi::Manager and the user who
-tries to resize the window. Hopefully, I'll find a way to sort this
-out, but I'd appreciate some help on this.
-
-- The Adjuster does not follow closely the mouse pointer. This is an
-Adjuster bug. I can't do much about it.
-
 - The print pop-up menu should be replaced by a modified version of
-Albert W. Dorrington's  PrintDialog. 
+Albert W. Dorrington's PrintDialog. Once this is done, the
+Tk::Multi::Any class will be removed.
 
 
 Legal mumbo jumbo:
@@ -69,10 +61,4 @@ INSTALLATION
    	 perl Makefile.PL
    	 make test          
    	 make install
-
-
-
-
-
-
 
