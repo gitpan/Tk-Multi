@@ -1,7 +1,8 @@
 package Tk::Multi::Text ;
+require Tk::ErrorDialog; 
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $printCmd);
+use vars qw(@ISA $printCmd $defaultPrintCmd);
 use Tk::ROText;
 
 require Exporter;
@@ -11,12 +12,8 @@ require AutoLoader;
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
-@EXPORT = qw(
-	
-);
-$VERSION = '0.01';
 
-$printCmd = 'lp -ol70 -otl66 -o12 -olm10' ;
+$printCmd = $defaultPrintCmd = 'lp -ol70 -otl66 -o12 -olm10' ;
 
 Tk::Widget->Construct('MultiText');
 
@@ -37,6 +34,7 @@ sub Populate
       if defined $title  ;
 
     $title = defined $title ? $title : 'anonymous' ;
+    $cw ->{dodu}{'title'} = $title ;
 
     print "Creating window $title\n";
 
@@ -90,6 +88,11 @@ sub Populate
     $textWindow->yview('moveto', 1) ; # move diplay to the end
   }
 
+
+
+1;
+__END__
+
 sub resize
   {
     my $cw= shift ;
@@ -123,11 +126,30 @@ sub print
   {
     my $cw= shift ;
 
-    open(POUT,"|$printCmd") or die "Can't open print pipe\n";
-    print POUT $cw ->{'label'},"\n\n" 
-      if defined $cw ->{'label'} ;
-    print POUT $cw->{'textObj'}->get('0.0','end') ;
-    close POUT ;
+    my $popup = $cw -> Toplevel ;
+    $popup -> title ($cw->{dodu}{'title'}.' print query') ;
+    $popup -> grab ;
+    $popup -> Label(text => 'modify print command as needed :') -> pack ;
+    $popup -> Entry(textvariable => \$printCmd) -> pack(fill => 'x') ;
+    my $f = $popup -> Frame -> pack(fill => 'x') ;
+    $f -> Button (text => 'print', 
+                  command => sub {$cw -> doPrint; $popup -> destroy ;})
+      -> pack (side => 'left') ;
+    $f -> Button (text => 'default', 
+                  command => sub {$printCmd=$defaultPrintCmd;})
+      -> pack (side => 'left') ;
+    $f -> Button (text => 'cancel', command => sub {$popup -> destroy ;})
+      -> pack (side => 'right') ;
+  }
+
+sub doPrint
+  {
+    my $cw= shift ;
+    open(POUT,"|$printCmd") or die "Can't open print pipe $!\n";
+    print POUT $cw ->{dodu}{'label'},"\n\n" 
+      if defined $cw ->{dodu}{'label'} ;
+    print POUT $cw->get('0.0','end') ;
+    close POUT or die "print command failed: $!\n";
   }
 
 sub hide
@@ -153,9 +175,11 @@ sub clear
     $cw->delete('1.0','end') ;
   }
 
-
-1;
-__END__
+sub setPrintCmd
+  {
+    my $cw= shift ;
+    $printCmd = shift ;
+  }
 
 # Below is the stub of documentation for your module. You better edit it!
 
@@ -217,11 +241,37 @@ Insert the passed string at the bottom of the text window
 
 =head2 print
 
-Print the label and the content of the text window.
+Will raise a popup window with an Entry to modify the actual print command,
+a print button, a default button (to restore the default print command),
+and a cancel button.
+
+=head2 doPrint
+
+Print the label and the content of the text window. The print is invoked
+by dumping the text content into a piped command. By default this command 
+is set to 'lp -ol70 -otl66 -o12 -olm10' which works fine on my HP-UX
+machine with A4 paper.
+
+You may want to set up a new command to print correctly on your machine.
+You may do it by using the setPrintCmd method or by invoking the 
+'print' method.
+
+=head2 setPrintCmd('print command')
+
+Will set the $printCmd class variable to the passed string. You may use this
+method to set the appropriate print command on your machine. Note that 
+using this method will affect all other Tk::Multi::Text object since the
+modified variable is not an instance variable but a class variable.
 
 =head2 clear
 
 Is just a delete('1.0','end') .
+
+=head1 TO DO
+
+I'm not really satisfied with print management. May be one day, I'll write a 
+print management composite widget which will look like Netscape's print 
+window. But that's quite low on my priority list. Any volunteer ?
 
 =head1 AUTHOR
 

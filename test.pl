@@ -12,6 +12,7 @@ use Tk ;
 use ExtUtils::testlib;
 use Tk::Multi::Manager;
 use Tk::Multi::Text;
+require Tk::ErrorDialog; 
 $loaded = 1;
 print "ok 1\n";
 
@@ -47,7 +48,7 @@ print "Creating sub window debug\n";
 my $debug = $wmgr -> newSlave('type'=>'MultiText', title => 'debug',
                              'hidden'=> 1, 'destroyable' => 1) ;
 
-$mw -> Button (text => 'destroy one', command => 
+$mw -> Button (text => 'destroy list slave', command => 
                sub {$wmgr -> destroySlave('list')} ) 
   -> pack ;
 

@@ -9,3 +9,7 @@ Revision history for Perl extension Tk::Log.
 0.03 Jeudi 13.11.97
         - now it can compile with Tk402.003
 
+0.04 Vendre 14/11/97
+        - better print management
+
+

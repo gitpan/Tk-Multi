@@ -1,7 +1,7 @@
 package Tk::Multi::Manager;
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $errno);
+use vars qw($VERSION @ISA @EXPORT_OK $errno);
 
 use Carp ;
 use Tk ;
@@ -13,9 +13,7 @@ require AutoLoader;
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
-@EXPORT = qw(
-	
-);
+
 $VERSION = '0.01';
 
 Tk::Widget->Construct('MultiManager');
@@ -74,9 +72,9 @@ sub newSlave
       }
  
     $cw->{dodu}{show}{$title} = 1 ;
-    if (defined $args{'hidden'} and $args{'hidden'} == 1)
+    if (defined $args{'hidden'} )
       {
-        $cw->{dodu}{show}{$title} = 0 ;
+        $cw->{dodu}{show}{$title} = 0 if $args{'hidden'} == 1 ;
         delete $args{'hidden'} ;
       }
     
@@ -116,57 +114,6 @@ sub newSlave
     return $cw->{dodu}{slave}{$title} ;
   }
 
-sub hide 
-  {
-    my $cw = shift ;
-    my $title = shift ;
-    $cw->{dodu}{show}{$title} = 0;
-    $cw-> updateVisi($title) ;
-  }
-
-sub show 
-  {
-    my $cw = shift ;
-    my $title = shift ;
-    $cw->{dodu}{show}{$title} = 1;
-    $cw-> updateVisi($title) ;
-  }
-
-sub updateVisi
-  {
-    my $cw = shift ;
-    my $title = shift ;
-    
-    if ($cw->{dodu}{'show'}{$title})
-      {
-        #raise it
-        $cw->{dodu}{slave}{$title} -> pack ;
-      }
-    else
-      {
-        #hide it
-        $cw->{dodu}{slave}{$title} -> packForget ;
-      }
-  }
-
-sub destroySlave
-  {
-    my $cw = shift ;
-    my $title = shift ;
-
-    # retrieve actual menu object from the MenuButtom
-    my $cm = $cw->{dodu}{menu} -> cget(-menu);
-
-    $cw->{dodu}{slave}{$title}->destroy;
-    $cw->{dodu}{submenu}{$title}->destroy;
-    
-    # delete the actual Menu entry from topmenu
-    $cm -> delete($title) ;
-
-    delete $cw->{dodu}{'show'}{$title} ;
-    delete $cw->{dodu}{submenu}{$title} ;
-    delete $cw->{dodu}{slave}{$title} ;
-  }
 
 1;
 __END__
@@ -253,3 +200,61 @@ Dominique Dumont, Dominique_Dumont@grenoble.hp.com
 perl(1), Tk(3), Tk::Multi::Text(3)
 
 =cut
+
+# '
+# autoload methods
+ 
+sub hide 
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    $cw->{dodu}{show}{$title} = 0;
+    $cw-> updateVisi($title) ;
+  }
+
+sub show 
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    $cw->{dodu}{show}{$title} = 1;
+    $cw-> updateVisi($title) ;
+  }
+
+sub updateVisi
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    
+    if ($cw->{dodu}{'show'}{$title})
+      {
+        #raise it
+        $cw->{dodu}{slave}{$title} -> pack ;
+      }
+    else
+      {
+        #hide it
+        $cw->{dodu}{slave}{$title} -> packForget ;
+      }
+  }
+
+sub destroySlave
+  {
+    my $cw = shift ;
+    my $title = shift ;
+
+    die "Slave $title does not exist\n" 
+      unless defined $cw->{dodu}{slave}{$title} ;
+
+    # retrieve actual menu object from the MenuButtom
+    my $cm = $cw->{dodu}{menu} -> cget(-menu);
+
+    $cw->{dodu}{slave}{$title}->destroy;
+    $cw->{dodu}{submenu}{$title}->destroy;
+    
+    # delete the actual Menu entry from topmenu
+    $cm -> delete($title) ;
+
+    delete $cw->{dodu}{'show'}{$title} ;
+    delete $cw->{dodu}{submenu}{$title} ;
+    delete $cw->{dodu}{slave}{$title} ;
+  }
