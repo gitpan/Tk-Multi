@@ -5,11 +5,11 @@ use vars qw($VERSION @ISA @EXPORT_OK $errno);
 
 use Carp ;
 use Tk ;
+use AutoLoader ;
 
 require Exporter;
-require AutoLoader;
 
-@ISA = qw(Tk::Frame AutoLoader);
+@ISA = qw(Tk::Frame);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
@@ -18,7 +18,11 @@ $VERSION = '0.01';
 
 Tk::Widget->Construct('MultiManager');
 
-# Preloaded methods go here.
+#stubs
+sub hide ;
+sub show ;
+sub updateVisi ;
+sub destroySlave ;
 
 # Autoload methods go after =cut, and are processed by the autosplit program.
 
@@ -71,10 +75,10 @@ sub newSlave
         die "Window $title already exists\n";
       }
  
-    $cw->{dodu}{show}{$title} = 1 ;
+    $cw->{dodu}{'show'}{$title} = 1 ;
     if (defined $args{'hidden'} )
       {
-        $cw->{dodu}{show}{$title} = 0 if $args{'hidden'} == 1 ;
+        $cw->{dodu}{'show'}{$title} = 0 if $args{'hidden'} == 1 ;
         delete $args{'hidden'} ;
       }
     
@@ -93,7 +97,7 @@ sub newSlave
     my $menu = $cm->Menu;
     $topmenu->entryconfigure($title, -menu => $menu);
     $menu->checkbutton(-label => 'show', 
-                       -variable => \$cw->{dodu}{show}{$title},
+                       -variable => \$cw->{dodu}{'show'}{$title},
                       command => sub {$cw->updateVisi($title) ;});
 
     $cw->{dodu}{submenu}{$title} = $menu ;
@@ -109,7 +113,7 @@ sub newSlave
                        command => sub{$cw->destroySlave($title);} );
       }
 
-    $cw->{dodu}{slave}{$title} -> pack if $cw->{dodu}{show}{$title};
+    $cw->{dodu}{slave}{$title} -> pack if $cw->{dodu}{'show'}{$title};
 
     return $cw->{dodu}{slave}{$title} ;
   }
@@ -208,7 +212,7 @@ sub hide
   {
     my $cw = shift ;
     my $title = shift ;
-    $cw->{dodu}{show}{$title} = 0;
+    $cw->{dodu}{'show'}{$title} = 0;
     $cw-> updateVisi($title) ;
   }
 
@@ -216,7 +220,7 @@ sub show
   {
     my $cw = shift ;
     my $title = shift ;
-    $cw->{dodu}{show}{$title} = 1;
+    $cw->{dodu}{'show'}{$title} = 1;
     $cw-> updateVisi($title) ;
   }
 

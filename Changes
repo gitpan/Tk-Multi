@@ -12,4 +12,9 @@ Revision history for Perl extension Tk::Log.
 0.04 Vendre 14/11/97
         - better print management
 
+0.1  28/11/97
+        - Use Autoload
+
+0.2  6/2/98
+        - Clean up usage of Autoloader. Added stub functions
 

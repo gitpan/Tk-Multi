@@ -4,11 +4,11 @@ require Tk::ErrorDialog;
 use strict;
 use vars qw(@ISA $printCmd $defaultPrintCmd);
 use Tk::ROText;
+use AutoLoader ;
 
 require Exporter;
-require AutoLoader;
 
-@ISA = qw(Tk::Frame AutoLoader);
+@ISA = qw(Tk::Frame);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
@@ -16,6 +16,16 @@ require AutoLoader;
 $printCmd = $defaultPrintCmd = 'lp -ol70 -otl66 -o12 -olm10' ;
 
 Tk::Widget->Construct('MultiText');
+
+#stubs
+sub resize ;
+sub setSize ;
+sub insertText ;
+sub print ;
+sub doPrint ;
+sub hide ;
+sub clear ;
+sub setPrintCmd ;
 
 # Preloaded methods go here.
 
@@ -69,13 +79,6 @@ sub Populate
 
     $cw->ConfigSpecs(DEFAULT => [$textWindow]) ;
     $cw->Delegates(DEFAULT => $textWindow) ;
-    # optionnal command
-#    if ($title eq 'dump' or $title eq 'remDump')
-#      {
-#	my $sf = $f -> Frame -> pack (side => 'left' ) ;
-#	$cw->dumpSubWindow($title, $sf) ;
-#	$textWindow -> configure(width => 60 ) ;
-#      }
 
     if (defined $cw->{'data'})
       {
@@ -92,6 +95,7 @@ sub Populate
 
 1;
 __END__
+
 
 sub resize
   {
