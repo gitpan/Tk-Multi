@@ -72,12 +72,16 @@ sub newSlave
         die "Window $title already exists\n";
       }
  
-    $cw->{dodu}{show}{$title} = 
-      not (defined $args{'hidden'} ? delete $args{'hidden'}: 0 ) ;
+    $cw->{dodu}{show}{$title} = 1 ;
+    if (defined $args{'hidden'} and $args{'hidden'} == 1)
+      {
+        $cw->{dodu}{show}{$title} = 0 ;
+        delete $args{'hidden'} ;
+      }
     
     if (defined $cw->{dodu}{slave}{$title})
       {
-        $cw->toggleVisi($title) ;
+        $cw->updateVisi($title) ;
         return $cw->{dodu}{slave}{$title} ;
       };
 
@@ -91,7 +95,7 @@ sub newSlave
     $topmenu->entryconfigure($title, -menu => $menu);
     $menu->checkbutton(-label => 'show', 
                        -variable => \$cw->{dodu}{show}{$title},
-                      command => sub {$cw->toggleVisi($title) ;});
+                      command => sub {$cw->updateVisi($title) ;});
 
     $cw->{dodu}{submenu}{$title} = $menu ;
 
@@ -109,12 +113,28 @@ sub newSlave
     return $cw->{dodu}{slave}{$title} ;
   }
 
-sub toggleVisi
+sub hide 
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    $cw->{dodu}{show}{$title} = 0;
+    $cw-> updateVisi($title) ;
+  }
+
+sub show 
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    $cw->{dodu}{show}{$title} = 1;
+    $cw-> updateVisi($title) ;
+  }
+
+sub updateVisi
   {
     my $cw = shift ;
     my $title = shift ;
     
-    if ($cw->{dodu}{show}{$title})
+    if ($cw->{dodu}{'show'}{$title})
       {
         #raise it
         $cw->{dodu}{slave}{$title} -> pack ;
@@ -140,7 +160,7 @@ sub destroySlave
     # delete the actual Menu entry from topmenu
     $cm -> delete($title) ;
 
-    delete $cw->{dodu}{show}{$title} ;
+    delete $cw->{dodu}{'show'}{$title} ;
     delete $cw->{dodu}{submenu}{$title} ;
     delete $cw->{dodu}{slave}{$title} ;
   }
@@ -200,6 +220,16 @@ Create a new slave to manager. Returns the slave widget object.
  'hidden' specifies whether the widget is to be packed tight now or not 
 (default 0)
  'destroyable' A 'destroy' button is created if this parameter is defined (default no).
+
+Returns the slave widget reference.
+
+=head2 hide('name of the slave');
+
+Hide the slave.
+
+=head2 show('name of the slave');
+
+Show the slave.
 
 =head2 destroySlave( 'name of the slave') ;
 

@@ -1,9 +1,14 @@
 
-This is Version 0.01.  See the "Changes" file for details on
-the new features and fixes in this release.
+Tk_Multi is a set of Tk composite widget to allow you to manage
+several scrolled Text windows in your Toplevel window. 
 
-This mopule was written with perl5.004. 
+The manager allows you through a menu to hide or show any Managed text window.
 
+The text windows also have menus to increase, decrease the window size, and 
+a menu to print its content.
+
+
+This module was written with perl5.004 and Tk400_202.
 
 See the embedded documentation in the module for more details.
 

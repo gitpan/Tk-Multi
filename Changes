@@ -3,3 +3,6 @@ Revision history for Perl extension Tk::Log.
 0.01  Wed Jul 23 17:02:08 1997
 	- original version; created by h2xs 1.18
 
+0.02 Vendredi 31 octobre 1997 14:08:09
+	- added hide and show methods in Manager.pm
+

@@ -115,17 +115,8 @@ sub insertText
     my $cw= shift ;
     my $text=shift ;
     
-    # if packed ? use $cw->packInfo 
     $cw->insert('end',$text) ;
     $cw->yview('moveto', 1) ;
-
-    my @array = $cw->packInfo ;
-    
-    # might add a 'debug' like feature 
-    unless ($array[0] eq '-in')
-      {
-        print ref($cw),"::",$cw->{name},": \n\t",$text ;
-      }
   }
 
 sub print
