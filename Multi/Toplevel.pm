@@ -1,9 +1,9 @@
 ############################################################
 #
-# $Header: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v 1.5 1999/01/04 12:32:20 domi Exp $
+# $Header: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v 1.6 1999/04/02 11:13:38 domi Exp $
 #
 # $Source: /home/domi/Tools/perlDev/Tk_Multi/Multi/RCS/Toplevel.pm,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Locker:  $
 # 
 ############################################################
@@ -17,7 +17,7 @@ require Tk::Toplevel;
 require Tk::Derived;
 
 use vars qw(@ISA $VERSION) ;
-$VERSION = sprintf "%d.%03d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 @ISA = qw(Tk::Derived Tk::Toplevel);
 
@@ -29,6 +29,7 @@ sub Populate
     my ($cw,$args) = @_ ;
 
     require Tk::Multi::Manager ;
+    require Tk::Multi::Frame ;
     require Tk::Multi::Text ;
     require Tk::ObjScanner ;
     
@@ -39,9 +40,13 @@ sub Populate
     my $showDebug = sub 
       { 
         # must not create 2 scanner windows
-        unless (scalar grep(ref($_ ) eq 'Tk::ObjScanner', $cw->children))
+        my $t = 'internals' ;
+        unless (defined $cw->getSlave($t))
           {
-            $cw -> ObjScanner('caller' => $cw->{manager}) 
+            my $f = $cw -> newSlave(type => 'MultiFrame', 
+                                    title => $t, 
+                                    destroyable => 1);
+            $f -> ObjScanner('caller' => $cw->{manager}) 
               -> pack(expand => 1);
           }
       } ;
@@ -91,6 +96,7 @@ sub Populate
     $cw->Delegates
       (
        newSlave => 'multiMgr',
+       getSlave => 'multiMgr',
        hide => 'multiMgr',
        show => 'multiMgr',
        destroySlave => 'multiMgr',
@@ -165,6 +171,7 @@ sub menuRemove
       {
         delete $cw->{menuItems}{$args{menu}};
         $cw->Subwidget($args{menu})-> destroy ;
+        delete $cw->{SubWidget}{$args{menu}}; # Tk::mega bug workaround
       }
   }
 
@@ -243,19 +250,45 @@ Tk::Multi::Toplevel - Toplevel MultiManager
 
 =head1 DESCRIPTION
 
-This class is a Tk::Multi::Manager packed in a Toplevel window. It features
-also :
- - a 'File->show internal...' button to invoke an Object Scanner 
-   (See Tk::ObjScanner(3))
- - a facility to manage user menus with sorted buttons
- - a help facility based on Tk::Pod
+This class is a L<Tk::Multi::Manager> packed in a Toplevel window. It
+features also :
+
+=over 4
+
+=item *
+
+'File->show internal...' button to invoke an Object Scanner 
+(See L<Tk::ObjScanner>)
+
+=item *
+
+A facility to manage user menus with sorted buttons
+
+=item *
+
+A help facility based on L<Tk::Pod>
+
+=back
 
 =head1 Users menus
 
 By default the Multi::Toplevel widget comes with 3 menubuttons:
- - 'File' for the main widget commands
- - 'windows' to manage the Multi slaves widget
- - 'Help'
+
+=over 4
+
+=item *
+
+'File' for the main widget commands
+
+=item *
+
+'windows' to manage the Multi slaves widget
+
+=item *
+
+'Help'
+
+=back
 
 The user can also add its own menus and menu buttons to the main menubar. 
 When needed the user can call the menuCommand method to add a new menu button
@@ -263,12 +296,14 @@ When needed the user can call the menuCommand method to add a new menu button
 with the menuRemove command.
 
 For instance, if the user call :
+
  $widget->->menuCommand(name => 'foo', menu => 'example', 
    sub => \&a_sub);
   
 The menubar will feature a new 'example' menu with a 'foo' button.
 
 Then if the user call : 
+
  $widget->->menuCommand(name => 'bar', menu => 'example', 
    sub => \&a_sub);
 
@@ -276,6 +311,7 @@ The menubar will feature a new 'bar' button in the 'example' menu. Note that
 menu buttons are sorted alphabetically.
 
 Then if the user call : 
+
  $widget->menuRemove(name => 'bar', menu => 'example');
 
 The bar button will be removed from the menu bar.
@@ -306,36 +342,101 @@ By default, the help button will display the 'DESCRIPTION' pod section.
 
 =head1 Advertised widgets
 
- - fileMenu: 'File' Tk::Menu (on the left of the menu bar)
- - menubar : the Tk::Frame containing the menu buttons
- - multiMgr: The Tk::Multi::Manager
+=over 4
+
+=item *
+
+fileMenu: 'File' Tk::Menu (on the left of the menu bar)
+
+=item *
+
+menubar : the Tk::Frame containing the menu buttons
+
+=item *
+
+multiMgr: The Tk::Multi::Manager
+
+=back
  
 Users menus are also advertised (See below)
 
 =head1 delegated methods
 
- - newSlave, hide, show, destroySlave : To the Tk::Multi::Manager 
- - add, delete, insert : To the 'File' Tk::Menu
+=over 4
+
+=item *
+
+newSlave, hide, show, destroySlave : To the Tk::Multi::Manager 
+
+=item *
+
+add, delete, insert : To the 'File' Tk::Menu
+
+=back
 
 =head1 Methods
 
-=head2 menuCommand ( name => button_name , menu => menu_name , command => subref )
+=head2 menuCommand()
+
+Parameters are :
+
+=over 4
+
+=item *
+
+name: button_name
+
+=item *
+
+menu: menu_name 
+
+=item *
+
+command: subref
+
+=back
 
 Will add the 'button_name' button in the 'menu_name' menu to invoke the sub 
 ref. If necessary, the 'menu_name' menu will be created.
 
-=head2 menuRemove ( name => button_name , menu => menu_name )
+=head2 menuRemove ()
+
+=over 4
+
+=item *
+
+name: button_name 
+
+=item *
+
+menu: menu_name 
+
+=back
 
 Will remove the 'button_name' button from the 'menu_name' menu.
 If no buttons are left, the 'menu_name' menu will be removed from the menu
 bar.
 
-=head2 showHelp ( [pod => pod_file_name], [section => pod_section] )
+=head2 showHelp (...)
 
-Will invoke Tk::Pod of the pod file and pod_section.
+Parameters are :
 
-By default, the pod file and section will be the one passed to the constructor
-or 'Tk::Multi::Toplevel' and 'DESCRIPTION'
+=over 4
+
+=item *
+
+pod: pod file name (optional, defaults to the file name passed to the
+constructor or to 'Tk::Multi::Toplevel')
+
+=item *
+
+section: pod_section (optional, defaults to the sectione name passed to the
+constructor or to 'DESCRIPTION')
+
+=back
+
+Will invoke the Tk::Pod documentation widget of the specified
+pod file and pod section.
 
 =head1 BUGS
 

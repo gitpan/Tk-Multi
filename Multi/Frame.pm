@@ -2,23 +2,23 @@
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
-package Tk::Multi::Canvas ;
+package Tk::Multi::Frame ;
 
 use strict;
 
 use vars qw($printCmd $defaultPrintCmd $VERSION);
 
-use base qw(Tk::Derived Tk::Frame Tk::Multi::Any);
+use base qw(Tk::Derived Tk::TFrame Tk::Multi::Any);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$printCmd = $defaultPrintCmd = 'lp -opostscript' ;
+$printCmd = $defaultPrintCmd = 'lp -ol70 -otl66 -o12 -olm10' ;
 
-Tk::Widget->Construct('MultiCanvas');
+Tk::Widget->Construct('MultiFrame');
 
 # Preloaded methods go here.
 
@@ -28,54 +28,42 @@ sub Populate
   {
     my ($cw,$args) = @_ ;
     require Tk::Label;
-    require Tk::Canvas;
+    require Tk::Frame;
 
     $cw->{_printCmdRef} = \$printCmd ;
 
     my $title = delete $args->{'title'} || delete $args->{'-title'} || 
       'anonymous';
     $cw ->{'title'} = $title ;
+    $args->{-label} = [ -text => $title ]; # for TFrame;
+    $cw->{printSub} = delete $args->{print} ;
 
     my $menu = delete $args->{'menu_button'} || delete $args->{'-menu_button'};
     die "Multi window $title: missing menu_button argument\n" 
       unless defined $menu ;
 
-    my $titleLabel = $cw->Label(text => $title.' display')-> pack(qw/fill x/) ;
-
-    $menu->command(-label=>'print...', command => [$cw, 'print' ]) ;
-    $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
+    $menu->command(-label=>'print...', command => [$cw, 'print' ]) 
+      if defined $cw->{printSub};
 
     # print stuff
     $cw->{_printToFile} = 0;
     $cw->{_printFile} = '';
 
-    my $slaveWindow = $cw -> Scrolled (qw/Canvas relief sunken bd 2/)
-      -> pack(qw/-fill both -expand 1/) ;
-
     my $subref = sub {$menu->Popup(-popover => 'cursor', -popanchor => 'nw')};
-    #$slaveWindow->Subwidget('scrolled') -> bind ('<Button-3>', $subref);
-    $titleLabel -> bind('<Button-3>', $subref);
+
+    $cw -> bind('<Button-3>', $subref);
 
     $cw->ConfigSpecs(
-                     'relief' => [$cw, undef, undef, 'raised'],
                      'borderwidth' => [$cw, undef, undef, 2 ],
-                     'scrollbars'=> [$slaveWindow, undef, undef,'osoe'],
-                     'width' => [$slaveWindow, undef, undef, 400],
-                     'height' => [$slaveWindow, undef, undef, 200],
-                     'DEFAULT' => [$slaveWindow]
+                     -relief => [$cw, undef, undef,'groove'],
+                     'DEFAULT' => [$cw]
                     ) ;
+
     $cw->Delegates('command' => $menu, 
-                   'clear' => $cw,
-                   DEFAULT => $slaveWindow) ;
+                   DEFAULT => $cw) ;
 
     $cw->SUPER::Populate($args);
   }    
-
-sub clear 
-  {
-    my $cw= shift ;
-    $cw-> delete('all') ;
-  }
 
 sub resetPrintCmd
   {
@@ -86,12 +74,7 @@ sub resetPrintCmd
 sub printableDump
   {
     my $cw= shift ;
-    my $array = $cw->cget('scrollregion') ;
-
-    return  $cw-> postscript
-      (qw/-colormode gray pageheight 29c pagewidth 21c/,
-       -width        => $array->[2],
-       -height       => $array->[3]);
+    return  &{$cw->{printSub}} ;
   }
 
 1;
@@ -102,13 +85,13 @@ __END__
 
 =head1 NAME
 
-Tk::Multi::Canvas - Tk composite widget with a scroll window and more
+Tk::Multi::Frame - Tk composite widget with a scroll window and more
 
 =head1 SYNOPSIS
 
  use Tk::Multi::Manager;
 
- use Tk::Multi::Canvas ; 
+ use Tk::Multi::Frame ; 
 
  my $manager = yourWindow -> MultiManager 
   (
@@ -117,7 +100,7 @@ Tk::Multi::Canvas - Tk composite widget with a scroll window and more
   ) -> pack ();
 
  # Don't pack it, the manager will do it
- my $w1 = $manager -> newSlave('type' => 'MultiCanvas', 'title' => 'a_label');
+ my $w1 = $manager -> newSlave('type' => 'MultiFrame', 'title' => 'a_label');
 
 =head1 DESCRIPTION
 
@@ -127,12 +110,12 @@ This composite widget features :
 
 =item *
 
-a scrollable Canvas
+a scrollable Frame
 
 =item *
 
 A print button (The shell print command may be modified by setting 
-$Tk::Multi::Canvas::printCmd to the appropriate shell command. By default, 
+$Tk::Multi::Frame::printCmd to the appropriate shell command. By default, 
 it is set to 'lp -opostscript') 
 
 =item *
@@ -141,7 +124,7 @@ a clear button
 
 =back
 
-This widget will forward all unrecognize commands to the Canvas object.
+This widget will forward all unrecognize commands to the Frame object.
 
 Note that this widget should be created only by the Multi::Manager. 
 
@@ -182,7 +165,7 @@ You may do it by using the setPrintCmd method or by invoking the
 
 Will set the $printCmd class variable to the passed string. You may use this
 method to set the appropriate print command on your machine. Note that 
-using this method will affect all other Tk::Multi::Canvas object since the
+using this method will affect all other Tk::Multi::Frame object since the
 modified variable is not an instance variable but a class variable.
 
 =head2 clear

@@ -14,7 +14,7 @@ use Tie::IxHash ;
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.3 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('MultiManager');
 
@@ -93,9 +93,22 @@ sub newSlave
         # display error message
         $cw->BackTrace("Window $title already exists\n");
       }
+    elsif (defined $args{before})
+      {
+        my $bef = delete $args{before} ;
+        my $idx = $cw->{tiedSlave}->Indices($bef);
+        # create the new entry in the tied hash and place it before
+        # $bef widget
+        $cw->{tiedSlave}->Splice($idx,0,$title => {})
+      }
+    elsif (defined $args{side} and delete $args{side} eq 'top')
+      {
+        # create the new entry in the tied hash and put it on top
+        $cw->{tiedSlave}->Unshift($title => {}) ; 
+      } 
     else
       {
-        # create the new entry in the tied hash
+        # create the new entry in the tied hash and put it on bottom
         $cw->{tiedSlave}->Push($title => {}) ; 
       } 
 
@@ -107,22 +120,16 @@ sub newSlave
         delete $args{'hidden'} ;
       }
     
-    if (defined $cw->{slave}{$title}{widget})
-      {
-        $cw->updateVisi($title) ;
-        return $cw->{slave}{$title}{widget} ;
-      };
-    
     # add help button if help is defined 
     $cw->addHelp('on '.$title, delete $args{help}) if defined $args{'help'} ;
     delete $args{'help'} if exists $args{'help'}; # cleanup
 
     # add control button
-    my $topmenu = $cw->{menu} ;
-    $topmenu -> cascade(-label => $title ) ;
+    my $topmenu = $cw->{menu}->menu ;
+    $topmenu ->insert($cw->{tiedSlave}->Indices($title) + 1,
+                                'cascade', -label => $title ) ;
 
-    my $cm = $topmenu -> cget(-menu);
-    my $menu = $cm->Menu;
+    my $menu = $topmenu->Menu;
     $topmenu->entryconfigure($title, -menu => $menu);
 
     # checkButton does not work if I get the ref from inside the tied hash
@@ -140,12 +147,13 @@ sub newSlave
 
     my $destroyable = delete $args{'destroyable'} ;
 
+    # add widget and adjuster
     my $wd = $cw->{slave}{$title}{widget} = 
       $cw -> $slaveType ('menu_button' => $menu, 
                             qw/relief raised borderwidth 4/,
                             %args);
-    $cw->{slave}{$title}{adjuster} = 
-      $cw -> Adjuster (-widget => $wd);
+    $cw->{slave}{$title}{adjuster} = $cw -> Adjuster (-widget => $wd);
+
 
     if (defined $destroyable and $destroyable)
       {
@@ -159,6 +167,12 @@ sub newSlave
     return $cw->{slave}{$title}{widget} ;
   }
 
+sub getSlave
+  {
+    my $cw = shift ;
+    my $title = shift ;
+    return defined $cw->{slave}{$title} ? $cw->{slave}{$title}{widget} : undef;
+  }
 
 sub addHelp
   {
@@ -232,37 +246,34 @@ sub updateVisi
 
     my @pargs = qw/fill both expand 1 anchor n/;
     my $currentW = $cw->{slave}{$title}{widget};
+
+    # so that the master window update its size when a slave is hidden
+    # or shown
+    $cw->packPropagate(1);
+
     if ($show)
       {
         if (defined $nextShowed)
           {
             print "$title uses packAdjust\n" if $cw->{trace} ;
 
-            #$w-> packAdjust(@pargs, before =>
-            #                $cw->{tiedSlave}-> Values($nextShowed)->{widget});
             my $nextWidget = $cw->{tiedSlave}-> Values($nextShowed)->{widget} ;
             $currentW->pack(@pargs, before => $nextWidget );
-            $cw->{slave}{$title}{adjuster}->
-              packed($currentW,before =>  $nextWidget );
-            $currentW-> after(500,sub{$currentW->packPropagate(0);}) ;
+            $cw->{slave}{$title}{adjuster}-> packAfter($currentW );
           }
         else
           {
             print "$title uses pack\n" if $cw->{trace} ;
-            $currentW -> pack(@pargs) ;
-            $currentW->packPropagate(1);
-            $currentW-> after(500,sub{$currentW->packPropagate(0);}) ;
             if (defined $prevShowed)
               {
                 print "index $prevShowed uses packAjust\n" if $cw->{trace} ;
                 my $prevWidget = 
                   $cw->{tiedSlave}-> Values($prevShowed)->{widget} ;
-                #$prevWidget->pack(@pargs);
+
                 $cw->{tiedSlave}-> Values($prevShowed)->{adjuster}->
-                  packed($prevWidget,before =>  $currentW );
-                #$w-> packAdjust(@pargs, before =>$cw->{slave}{$title}{widget});
-                $prevWidget ->after(500,sub{$prevWidget->packPropagate(0);});
+                  packAfter($prevWidget );
               }
+            $currentW -> pack(@pargs) ;
           }
       }
     else
@@ -271,16 +282,13 @@ sub updateVisi
           {
             print "index $prevShowed uses pack\n" if $cw->{trace} ;
             my $w = $cw->{tiedSlave}-> Values($prevShowed)->{adjuster} ;
-            $w->packForget();
+            $w->packForget(1);
             $cw->{tiedSlave}-> Values($prevShowed)->{widget}->
-              packPropagate(1);
-            #$w->pack(qw/fill both expand 1/) ;
+              pack(@pargs);
           }
         #hide it
         print "$title uses packForget\n" if $cw->{trace} ;
-        $cw->{slave}{$title}{widget} -> packForget ;
-        $cw->{slave}{$title}{adjuster} -> packForget ;
-        $cw->{slave}{$title}{widget} -> packPropagate(1);
+        $cw->{slave}{$title}{adjuster} -> packForget(1) ;
       }
   }
 
@@ -292,16 +300,22 @@ sub destroySlave
     die "Slave $title does not exist\n" 
       unless defined $cw->{slave}{$title}{widget} ;
 
+    # first remove the display from the window
+    $cw->updateVisi($title,0);
+
     # retrieve actual menu object from the MenuButtom
     my $cm = $cw->{menu} -> cget(-menu);
 
     $cw->{slave}{$title}{widget}->destroy;
     $cw->{slave}{$title}{submenu}->destroy;
     
+    my $idx = $cw->{tiedSlave}->Indices($title);
+    $cw->{tiedSlave}->Splice($idx,1);
+
     # delete the actual Menu entry from topmenu
     $cm -> delete($title) ;
 
-    delete $cw->{slave}{$title};
+    #delete $cw->{slave}{$title};
   }
 
 1;
@@ -338,39 +352,55 @@ Tk::Multi::Manager - Tk composite widget managing Tk::Multi slaves
 The manager is a composite widget made of a menu cascade of check buttons 
 and slaves which can be Tk::Multi::Text.
 
-The user can add windows to the manager. Each window visibility is 
-controled by a check button in the menu cascade.
-The check button actually tells the packer to forget the window. note that
-the window object is not destroyed.
+The user can add windows to the manager. Each window visibility is
+controled by a check button in the menu cascade.  The check button
+actually tells the packer to forget the window. note that the window
+object is not destroyed.
 
-The main menu bar will feature a 'Help' menu on the right. If the main help
-which explain the purpose of the Multi::Manager and its slaves is provided 
-when creating the widget,
-the Help sub-menu will feature a 'global' label. 
+The main menu bar will feature a 'Help' menu on the right. If the main
+help which explain the purpose of the Multi::Manager and its slaves is
+provided when creating the widget, the Help sub-menu will feature a
+'global' label.
 
-Each slave widget which is
-created with a help will have its own label in the help menu.
+Each slave widget which is created with a help will have its own label
+in the help menu.
+
+=head1 Multi widgets
+
+This package features the following Multi widgets:
+
+=over 4
+
+=item *
+
+L<Tk::Multi::Text>
+
+=item *
+
+L<Tk::Multi::Canvas>
+
+=back
 
 =head1 Constructor configuration options
 
 =head2 menu
 
-The widget may use a 'menu' argument which will be used to create a menu 
-item and releveant sub-menus to control the sub-window.
-If not provided, the widget will create a its own menu.
+The widget may use a 'menu' argument which will be used to create a
+menu item and releveant sub-menus to control the sub-window.  If not
+provided, the widget will create a its own menu.
 
 =head2 title
 
-The optionnal title argument contains the title of the menu created by the 
-manager.
+The optionnal title argument contains the title of the menu created by
+the manager.
 
 =head2 help
 
 The argument may be a string or a sub reference.
 
-When the help menu is invoked, either the help string will be displayed 
-in a Tk::Dialog box or the sub will be run. In this case it is the user's
-responsability to provide a readable help from the sub.
+When the help menu is invoked, either the help string will be
+displayed in a L<Tk::Dialog> box or the sub will be run. In this case it
+is the user's responsability to provide a readable help from the sub.
 
 =cut
 
@@ -378,36 +408,52 @@ responsability to provide a readable help from the sub.
 
 =head1 Methods
 
-=head2 newSlave('type' => 'MultiXXX', 'title'=> 'name', ['hidden' => 1] ) ;
+=head2 newSlave(...) ;
 
-Create a new slave to manager. Returns the slave widget object. 
+Create a new slave to manager. Returns the slave widget object. Parameters
+are:
 
 =over 4
 
-=item type
+=item *
 
-specifies the kind of Multi widget (ex MultiText).
+type: specifies the kind of Multi widget (e.g. MultiText).
 
-=item title
+=item *
 
-specifies the title of the widget (mandatory).
+title: specifies the title of the widget (mandatory).
 
-=item hidden
+=item *
 
-specifies whether the widget is to be packed right now or not 
+before: specify that you want this new slave to be packed before
+(well, above) another widget. This parameter will be set to the 'title' of 
+this other widget.
+
+=item *
+
+side: when set to 'top', the widget will be packed on top of the others.
+(default to 'bottom').
+
+=item *
+
+hidden: specifies whether the widget is to be packed right now or not
 (default 0)
 
-=item destroyable
+=item *
 
-a 'destroy' button is created if this parameter is defined (default no).
-Returns the slave widget reference.
+destroyable: a 'destroy' button is created if this parameter is
+defined (default no).  Returns the slave widget reference.
 
-=item help
+=item *
 
-This argument may be specified like the help parameter defined above for the
-constructor.
+help: This argument may be specified like the help parameter defined
+above for the constructor.
 
 =back
+
+=head2 getSlave('name of the slave');
+
+Return the slave widget or undef.
 
 =head2 hide('name of the slave');
 
@@ -421,24 +467,11 @@ Show the slave.
 
 Destroy the slave
 
-=head1 BUGS
-
-Using packAdjuster is somewhat shaky when more than 2 slaves are packed.
-
-Hiding an adjusted slave widget will leave an orphan Adjuster bar. 
-
-When packing a slave widget after the window has been displayed, the slave
-is packed *outside* the window so it becomes visible only if the user
-manually increase the size of the top window (by dragging a side or a corner).
-
-I guess that geometry management still has some mysteries that I cannot figure
-out.
-
 =head1 AUTHOR
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
 
-Copyright (c) 1997-1998 Dominique Dumont. All rights reserved.
+Copyright (c) 1997-1999 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

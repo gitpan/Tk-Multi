@@ -8,7 +8,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..7\n"; }
+BEGIN { $| = 1; print "1..10\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Tk ;
 use ExtUtils::testlib;
@@ -55,17 +55,11 @@ my $wmgr = $mw -> MultiManager
 print "ok ",$idx++,"\n";
 
 print "Creating sub window toto\n" if $trace ;
-$toto = $wmgr -> newSlave('type'=>'MultiText',
-                         'help' => 'Type anything you want in the test widget or click on the add button') ;
-
-print "ok ",$idx++,"\n";
-
-print "Creating sub window list\n" if $trace ;
-my $list = $wmgr -> newSlave('type'=> 'MultiText', title => 'list',
-                            height => '10', data => [1 .. 20] ,
-                            'help' => 'you may destroy the list widget') ;
-$list->command(-label => 'display dummy',  
-               -command => sub{$list->insertText("added dummy\n");} );
+# default to Manager-0 name
+$toto = $wmgr -> newSlave
+  (
+   'type'=>'MultiText',
+   'help' => 'Type anything you want in the test widget or click on the add button') ;
 
 print "ok ",$idx++,"\n";
 
@@ -78,6 +72,36 @@ my $debug = $wmgr -> newSlave
    'hidden'=> 1, 
    'destroyable' => 1
   ) ;
+print "ok ",$idx++,"\n";
+
+print "Creating sub window list\n" if $trace ;
+my $list = $wmgr -> newSlave
+  (
+   'type'=> 'MultiText', 
+   title => 'list',
+   before => 'sunken debug',
+   height => '10', 
+   data => [1 .. 20, "\n"] ,
+   'help' => 'you may destroy the list widget'
+  ) ;
+
+print "ok ",$idx++,"\n";
+
+print "Creating sub window list2 on top of others\n" if $trace ;
+$wmgr -> newSlave
+  (
+   'type'=> 'MultiText', 
+   title => 'list2',
+   side => 'top',
+   data => ["no data\n"]
+  ) ;
+
+print "ok ",$idx++,"\n";
+
+$list->command(-label => 'display dummy',  
+               -command => sub{$list->insertText("added dummy\n");} );
+
+print "ok ",$idx++,"\n";
 
 $mw -> Button (text => 'destroy list slave', command => 
                sub {$wmgr -> destroySlave('list')} ) 
