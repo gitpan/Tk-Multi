@@ -1,39 +1,54 @@
 
+
 Tk_Multi is a set of Tk composite widget to allow you to manage
-several scrolled Text or Canvas (or your own Multi widget) widgets
-in your Toplevel window. 
+several scrolled Text or Canvas (or your own Multi widget) widgets in
+your Toplevel window.
 
-The manager allows you to hide or show any managed text window through a menu.
+The manager allows you to hide or show any managed text window through
+a menu.
 
-Tk::Multi::* widgets uses packAdjust to increase, decrease the window 
-size, and a menu to print its content. 
+Tk::Multi::* widgets uses Adjuster to increase, decrease the window
+size, and a menu to print its content.
 
-The Multi::Any class is deprecated. It will be removed in the next release.
-I hope that not too many people were using it (I doubt it because I had 
-no question about it :-/ )
+The Multi::Any class is deprecated. It will was removed in this
+release.  I hope that not too many people were using it (I doubt it
+because I had no question about it :-/ )
 
-This module was written with perl5.005 and now works fine with Tk800.010.
+This module was written with perl5.005 and now works fine with
+Tk800.010.
 
 See the embedded documentation in the module for more details.
 
 Comments and suggestions are always welcome.
 
-Note that this module is in beta state. Its interface may still change 
+Note that this module is in beta state. Its interface may still change
 (but I don't think so)
 
 I'd like people who actually use this module for their application to
-drop me a short note about what they're using this module for. 
-
-Beta exit criteria:
-- When some peoples (well, say 10 guys) tell me that they've used it 
-  and did not find major bug with the module or minor problems with the 
-  interface.
+drop me a short note about what they're using this module for.
 
 Many thanks to Larry W. Virden, Achim Bohnet for all the tests, patches
 (and reports) they made. Many bugs were fixed and improvements were 
 included thanks to their efforts.
 
+
+TO DO (well, bugs...): 
+----------------------
+
+- There's some kind of geometry or size conflict between the Adjuster,
+the frames that are created by the Multi::Manager and the user who
+tries to resize the window. Hopefully, I'll find a way to sort this
+out, but I'd appreciate some help on this.
+
+- The Adjuster does not follow closely the mouse pointer. This is an
+Adjuster bug. I can't do much about it.
+
+- The print pop-up menu should be replaced by a modified version of
+Albert W. Dorrington's  PrintDialog. 
+
+
 Legal mumbo jumbo:
+------------------
 
  Copyright (c) 1997-1998 Dominique Dumont. All rights reserved.
  This program is free software; you can redistribute it and/or

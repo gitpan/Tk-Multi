@@ -8,7 +8,7 @@ use vars qw(@ISA $printCmd $defaultPrintCmd $VERSION);
 
 @ISA = qw(Tk::Derived Tk::Frame Tk::Multi::Any);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.2 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -39,9 +39,16 @@ sub Populate
     die "Multi window $title: missing menu_button argument\n" 
       unless defined $menu ;
 
-    my $titleLabel = $cw->Label(text => $title.' display')-> pack(qw/fill x/) ;
+    my $subref = sub {$menu->Popup(-popover => 'cursor', -popanchor => 'nw')};
 
-    $menu->command(-label=>'print', command => [$cw, 'print' ]) ;
+    #$cw->bind ('<Button-3>', $subref);
+    #$slaveWindow->bind ('<Button-3>', $subref);
+    #Tk::bind($cw, '<Button-3>', $subref);
+
+    my $titleLabel = $cw->Label(text => $title.' display')-> pack(qw/fill x/) ;
+    $titleLabel -> bind('<Button-3>', $subref);
+
+    $menu->command(-label=>'print...', command => [$cw, 'print' ]) ;
     $menu->command(-label=>'clear', command => [$cw, 'clear' ]);
 
     # print stuff
@@ -51,10 +58,7 @@ sub Populate
     my $slaveWindow = $cw -> Scrolled ('ROText')
       -> pack(qw/-fill both -expand 1/) ;
 
-
-    my $subref = sub {$menu->Popup(-popover => 'cursor', -popanchor => 'nw')};
-    $slaveWindow->bind ('<Button-3>', $subref);
-    $titleLabel -> bind('<Button-3>', $subref);
+    $cw->Advertise('text' => $slaveWindow) ;
 
     $cw->ConfigSpecs(
                      'relief' => [$cw],

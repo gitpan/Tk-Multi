@@ -1,3 +1,9 @@
+v0.72: 1998-11-23  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	* Multi/Text.pm : fix bind pb
+
+	* Multi/Manager.pm: Unpacks Adjuster instead of destroying them
+
 v0.71: 1998-08-18  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* All (except Any): Changed version string so that CPAN does not

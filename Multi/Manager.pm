@@ -6,6 +6,7 @@ use vars qw($VERSION @ISA $errno);
 use Carp ;
 use Tk::Derived;
 use Tk::Frame;
+use Tk::Adjuster ;
 use Tie::IxHash ;
 
 @ISA = qw(Tk::Derived Tk::Frame);
@@ -13,7 +14,7 @@ use Tie::IxHash ;
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.2 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('MultiManager');
 
@@ -139,10 +140,12 @@ sub newSlave
 
     my $destroyable = delete $args{'destroyable'} ;
 
-    $cw->{slave}{$title}{widget} = 
+    my $wd = $cw->{slave}{$title}{widget} = 
       $cw -> $slaveType ('menu_button' => $menu, 
                             qw/relief raised borderwidth 4/,
                             %args);
+    $cw->{slave}{$title}{adjuster} = 
+      $cw -> Adjuster (-widget => $wd);
 
     if (defined $destroyable and $destroyable)
       {
@@ -206,6 +209,7 @@ sub updateVisi
 
 
     my $slave = $cw->{slave}{$title} ;
+    # NB tiedSlave and slave are a tied IxHash
     my $idx = $cw->{tiedSlave} -> Indices($title) ;
     my $nextShowed ;
     my $prevShowed ;
@@ -227,43 +231,55 @@ sub updateVisi
     print "$title next showed is index $nextShowed\n" if $cw->{trace} ;
 
     my @pargs = qw/fill both expand 1 anchor n/;
+    my $currentW = $cw->{slave}{$title}{widget};
     if ($show)
       {
         if (defined $nextShowed)
           {
             print "$title uses packAdjust\n" if $cw->{trace} ;
-            my $w = $cw->{slave}{$title}{widget};
-            $w-> packAdjust(@pargs, before =>
-                            $cw->{tiedSlave}-> Values($nextShowed)->{widget});
-            $w-> after(500,sub{$w->packPropagate(0);}) ;
+
+            #$w-> packAdjust(@pargs, before =>
+            #                $cw->{tiedSlave}-> Values($nextShowed)->{widget});
+            my $nextWidget = $cw->{tiedSlave}-> Values($nextShowed)->{widget} ;
+            $currentW->pack(@pargs, before => $nextWidget );
+            $cw->{slave}{$title}{adjuster}->
+              packed($currentW,before =>  $nextWidget );
+            $currentW-> after(500,sub{$currentW->packPropagate(0);}) ;
           }
         else
           {
             print "$title uses pack\n" if $cw->{trace} ;
-            $cw->{slave}{$title}{widget} -> pack(@pargs) ;
+            $currentW -> pack(@pargs) ;
+            $currentW->packPropagate(1);
+            $currentW-> after(500,sub{$currentW->packPropagate(0);}) ;
             if (defined $prevShowed)
               {
                 print "index $prevShowed uses packAjust\n" if $cw->{trace} ;
-                my $w = $cw->{tiedSlave}-> Values($prevShowed)->{widget} ;
-                $w->packForget();
-                $w-> packAdjust(@pargs, before =>$cw->{slave}{$title}{widget});
-                $w ->after(500,sub{$w->packPropagate(0);});
+                my $prevWidget = 
+                  $cw->{tiedSlave}-> Values($prevShowed)->{widget} ;
+                #$prevWidget->pack(@pargs);
+                $cw->{tiedSlave}-> Values($prevShowed)->{adjuster}->
+                  packed($prevWidget,before =>  $currentW );
+                #$w-> packAdjust(@pargs, before =>$cw->{slave}{$title}{widget});
+                $prevWidget ->after(500,sub{$prevWidget->packPropagate(0);});
               }
           }
       }
     else
       {
-        if (defined $prevShowed)
+        if (defined $prevShowed and not defined $nextShowed)
           {
             print "index $prevShowed uses pack\n" if $cw->{trace} ;
-            my $w = $cw->{tiedSlave}-> Values($prevShowed)->{widget} ;
+            my $w = $cw->{tiedSlave}-> Values($prevShowed)->{adjuster} ;
             $w->packForget();
-            $w->packPropagate(1);
-            $w->pack(qw/fill both expand 1/) ;
+            $cw->{tiedSlave}-> Values($prevShowed)->{widget}->
+              packPropagate(1);
+            #$w->pack(qw/fill both expand 1/) ;
           }
         #hide it
         print "$title uses packForget\n" if $cw->{trace} ;
         $cw->{slave}{$title}{widget} -> packForget ;
+        $cw->{slave}{$title}{adjuster} -> packForget ;
         $cw->{slave}{$title}{widget} -> packPropagate(1);
       }
   }
