@@ -1,14 +1,13 @@
 package Tk::Multi::Text ;
 
 use strict;
-require Tk::Multi::Any;
 require Tk::Derived;
 
 use vars qw(@ISA $printCmd $defaultPrintCmd $VERSION);
 
-@ISA = qw(Tk::Derived Tk::Frame Tk::Multi::Any);
+@ISA = qw(Tk::Derived Tk::Frame);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 2.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 2.3 $ =~ /(\d+)\.(\d+)/;
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.

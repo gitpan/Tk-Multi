@@ -1,3 +1,7 @@
+v0.73 1998-12-15  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	* Some reference to the late Tk::Multi::Any was left
+
 v0.72: 1998-11-23  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* Multi/Text.pm : fix bind pb
